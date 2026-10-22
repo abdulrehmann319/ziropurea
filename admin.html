@@ -537,7 +537,8 @@ $('loginForm').addEventListener('submit', async event => {
 
     show();
     await load();
-    say('Logged in successfully.');
+await loadWhatsAppNumber();
+say('Logged in successfully.');
 
   } catch (error) {
     token = '';
