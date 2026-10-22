@@ -38,12 +38,106 @@ if(!r.ok)throw new Error((await r.text())||r.status);const t=await r.text();retu
 function show(){const on=!!token;$('login').classList.toggle('hide',on);$('app').classList.toggle('hide',!on);$('logout').classList.toggle('hide',!on);if(on)load()}
 $('go').onclick=async()=>{try{const r=await fetch(URL_+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email:$('em').value,password:$('pw').value})});const j=await r.json();if(!r.ok)throw new Error(j.error_description||j.msg||'Login failed');token=j.access_token;sessionStorage.setItem('zp_token',token);say('');show()}catch(e){say(e.message)}};
 $('logout').onclick=()=>{token=null;sessionStorage.removeItem('zp_token');show()};
-async function load(){try{const rows=await api('/rest/v1/products?select=*&order=created_at.desc')
-$('list').innerHTML=rows.length?rows.map(p=>`<div class="item ${p.is_active?'':'off'}"><img src="${esc(p.image_url)}" alt=""><div><strong>${esc(p.name)}</strong> <small>${esc(p.tag)}</small><div class="pr">Rs. <input type="number" value="${p.price??''}" id="pr${p.id}" placeholder="—"><input type="number" value="${p.compare_price??''}" id="cp${p.id}" placeholder="old price"><button class="ghost" onclick="savePrice(${p.id})">Save price</button></div></div><div class="acts"><button class="ghost" onclick="patch(${p.id},{in_stock:${!p.in_stock}})">${p.in_stock?'Mark sold out':'Back in stock'}</button><button class="ghost" onclick="patch(${p.id},{is_active:${!p.is_active}})">${p.is_active?'Hide':'Show'}</button><button class="del" onclick="removeP(${p.id},'${esc(p.name).replace(/'/g,'')}')">Delete</button></div></div>`).join(''):'No products yet.'}catch(e){say('Could not load: '+e.message);if(/JWT|expired/i.test(e.message))$('logout').click()}}
-const num=v=>v===''||v==null?null:Number(v);
-async function patch(id,body){try{await api('/rest/v1/products?id=eq.'+id,{method:'PATCH',body:JSON.stringify(body)});say('Saved.');load()}catch(e){say(e.message)}}
-window.patch=patch;window.savePrice=id=>patch(id,{price:num($('pr'+id).value),compare_price:num($('cp'+id).value)});
-window.removeP=async(id,n)=>{if(!confirm('Delete "'+n+'" permanently?'))return;try{await api('/rest/v1/products?id=eq.'+id,{method:'DELETE'});say('Deleted.');load()}catch(e){say(e.message)}};
+
+async function load(){
+  try {
+    const rows = await api(
+      '/rest/v1/products?select=*&order=created_at.desc'
+    );
+
+    $('list').innerHTML = rows.length
+      ? rows.map(p => `
+        <div class="item">
+          <img src="${esc(p.image_url || '')}" alt="">
+          <div>
+            <strong>${esc(p.name)}</strong>
+            <div class="pr">
+              <label>Price (Rs.)</label>
+              <input type="number" min="0" id="pr${esc(p.id)}"
+                value="${p.price ?? 0}">
+              <button class="ghost" data-save="${esc(p.id)}">Save price</button>
+            </div>
+            <div>Stock: ${Number(p.stock || 0)}</div>
+            <div>${p.active ? 'Visible' : 'Hidden'}</div>
+          </div>
+          <div class="acts">
+            <button class="ghost" data-stock="${esc(p.id)}">
+              ${Number(p.stock) > 0 ? 'Sold out' : 'Restock'}
+            </button>
+            <button class="ghost" data-active="${esc(p.id)}">
+              ${p.active ? 'Hide' : 'Show'}
+            </button>
+            <button class="del" data-delete="${esc(p.id)}">Delete</button>
+          </div>
+        </div>
+      `).join('')
+      : 'No products yet.';
+
+    $('list').querySelectorAll('[data-save]').forEach(b => {
+      b.onclick = async () => {
+        const id = b.dataset.save;
+        const price = Number($('pr' + id).value);
+        if (!Number.isFinite(price) || price < 0) {
+          say('Enter a valid price.');
+          return;
+        }
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            body: JSON.stringify({price})
+          });
+          say('Price saved.');
+          await load();
+        } catch(e) { say(e.message); }
+      };
+    });
+
+    $('list').querySelectorAll('[data-stock]').forEach(b => {
+      b.onclick = async () => {
+        const p = rows.find(x => String(x.id) === b.dataset.stock);
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(p.id), {
+            method: 'PATCH',
+            body: JSON.stringify({stock: Number(p.stock) > 0 ? 0 : 10})
+          });
+          say('Stock updated.');
+          await load();
+        } catch(e) { say(e.message); }
+      };
+    });
+
+    $('list').querySelectorAll('[data-active]').forEach(b => {
+      b.onclick = async () => {
+        const p = rows.find(x => String(x.id) === b.dataset.active);
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(p.id), {
+            method: 'PATCH',
+            body: JSON.stringify({active: !p.active})
+          });
+          say('Visibility updated.');
+          await load();
+        } catch(e) { say(e.message); }
+      };
+    });
+
+    $('list').querySelectorAll('[data-delete]').forEach(b => {
+      b.onclick = async () => {
+        const p = rows.find(x => String(x.id) === b.dataset.delete);
+        if (!confirm('Delete "' + p.name + '" permanently?')) return;
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(p.id), {
+            method: 'DELETE'
+          });
+          say('Product deleted.');
+          await load();
+        } catch(e) { say(e.message); }
+      };
+    });
+  } catch(e) {
+    say('Could not load products: ' + e.message);
+  }
+}
+
 $('add').onclick=async()=>{const name=$('n').value.trim();if(!name)return say('Name is required.');$('add').disabled=true;say('Adding…');
 try{let image_url=null;const f=$('f').files[0];
 if(f){const path=Date.now()+'-'+f.name.replace(/[^a-z0-9.]+/gi,'-').toLowerCase();const r=await fetch(`${URL_}/storage/v1/object/${BUCKET}/${path}`,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':f.type},body:f});if(!r.ok)throw new Error('Image upload failed: '+await r.text());image_url=`${URL_}/storage/v1/object/public/${BUCKET}/${path}`}
