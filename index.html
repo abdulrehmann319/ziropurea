@@ -139,7 +139,7 @@ const lines=entries.map(([n,q])=>`• ${n} × ${q} — ${hasPrice(n)?money(PRICE
 const total=entries.reduce((s,[n,q])=>s+(hasPrice(n)?PRICES[n]*q:0),0);
 const msg=['Assalam-o-Alaikum Ziorpure! I would like to place this order:','',...lines,'',total?'Products total: '+money(total):'','Please confirm availability and delivery charges. Thank you!'].join('\n');window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`,'_blank','noopener')});
 function productCard(p){const sale=typeof p.compare_price==='number'&&typeof p.price==='number'&&p.compare_price>p.price;
-const price=typeof p.price==='number'?(sale?`<s class="was">${money(p.compare_price)}</s>`:'')+money(p.price):'Price on request';
+const price=typeof p.price==='number'&&p.price>0?(sale?`<s class="was">${money(p.compare_price)}</s>`:'')+money(p.price):'Price on request';
 const out=p.in_stock===false;
 return `<article class="card"><div class="product-image">${out?'<span class="badge">Sold out</span>':sale?'<span class="badge sale">Sale</span>':''}<img src="${escapeHTML(p.image_url||'')}" alt="Ziorpure ${escapeHTML(p.name)}"></div><div class="info"><span class="tag">${escapeHTML(p.tag||'')}</span><h3>${escapeHTML(p.name)}</h3><p>${escapeHTML(p.description||'')}</p><div class="bottom"><span class="price">${price}</span><button class="order add-cart" data-product="${escapeHTML(p.name)}" ${out?'disabled':''}>${out?'Sold out':'Add to bag'}</button></div></div></article>`}
 
