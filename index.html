@@ -126,7 +126,7 @@ function closeCart(){panel.classList.remove('open');panel.setAttribute('aria-hid
 document.querySelectorAll('.cart-open').forEach(b=>b.addEventListener('click',openCart));document.getElementById('cart-close').addEventListener('click',closeCart);backdrop.addEventListener('click',closeCart);
 document.getElementById('products-grid').addEventListener('click',e=>{const b=e.target.closest('.add-cart');if(!b||b.disabled)return;const n=b.dataset.product;cart[n]=(cart[n]||0)+1;renderCart();openCart()});
 function changeQty(n,d){cart[n]=(cart[n]||0)+d;if(cart[n]<=0)delete cart[n];renderCart()}
-const hasPrice=n=>typeof PRICES[n]==='number';
+const hasPrice=n=>typeof PRICES[n]==='number'&&PRICES[n]>0;
 function renderCart(){const entries=Object.entries(cart);document.getElementById('cart-count').textContent=entries.reduce((s,[,q])=>s+q,0);
 if(!entries.length)cartItems.innerHTML='<p class="empty-cart">Your bag is empty. Add a product to get started.</p>';
 else cartItems.innerHTML=entries.map(([n,q])=>`<div class="cart-line"><div><h3>${escapeHTML(n)}</h3><small>${hasPrice(n)?money(PRICES[n])+' each':'Price to be confirmed'}</small><div class="qty-controls"><button aria-label="Decrease quantity" data-action="minus" data-name="${escapeHTML(n)}">−</button><span>${q}</span><button aria-label="Increase quantity" data-action="plus" data-name="${escapeHTML(n)}">+</button></div><button class="remove-line" data-action="remove" data-name="${escapeHTML(n)}">Remove</button></div><strong>${hasPrice(n)?money(PRICES[n]*q):'—'}</strong></div>`).join('');
