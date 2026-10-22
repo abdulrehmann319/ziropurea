@@ -1,149 +1,563 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Ziorpure Admin</title>
-<style>
-:root{--noir:#14100e;--gold:#c8a96a;--ivory:#f4eee4;--sand:#e9e0d1;--stone:#8d8378}
-*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--ivory);color:#201a16}
-header{background:var(--noir);color:var(--gold);padding:16px 22px;display:flex;justify-content:space-between;align-items:center;font:600 20px Georgia,serif;letter-spacing:.12em}
-main{max-width:1000px;margin:auto;padding:22px}.box{background:#fff;border:1px solid #d9ccb6;padding:20px;margin-bottom:22px}
-h2{font:500 24px Georgia,serif;margin:0 0 14px}label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
-input,textarea{width:100%;padding:10px;border:1px solid #cdbfa8;font:inherit;background:#fff}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-button{background:var(--noir);color:var(--gold);border:0;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer}button.ghost{background:none;color:#201a16;border:1px solid #201a16;padding:6px 10px;font-size:13px}button.del{background:none;color:#b3261e;border:1px solid #b3261e;padding:6px 10px;font-size:13px}
-.item{display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid #eee3d0}.item img{width:64px;height:64px;object-fit:contain;background:var(--sand)}
-.item .pr{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}.item .pr input{width:110px;padding:6px}.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.off{opacity:.5}#msg{min-height:20px;font-size:13px;margin-top:8px;color:#7a5c1e}.hide{display:none}
-@media(max-width:600px){.row{grid-template-columns:1fr}.item{grid-template-columns:48px 1fr}.acts{grid-column:1/-1;justify-content:flex-start}}
-</style></head><body>
-<header>ZIORPURE ADMIN <button id="logout" class="ghost hide" style="color:var(--gold);border-color:var(--gold)">Log out</button></header>
-<main>
-<div class="box" id="login"><h2>Admin login</h2><label>Email</label><input id="em" type="email" autocomplete="username"><label>Password</label><input id="pw" type="password" autocomplete="current-password"><p><button id="go">Log in</button></p></div>
-<div id="app" class="hide">
-<div class="box"><h2>Add a product</h2>
-<div class="row"><div><label>Name *</label><input id="n"></div><div><label>Tag (e.g. Silky finish)</label><input id="t"></div></div>
-<label>Description</label><textarea id="d" rows="2"></textarea>
-<div class="row"><div><label>Price (Rs.) — empty = Price on request</label><input id="p" type="number" min="0"></div><div><label>Old price (optional, shows Sale)</label><input id="cp" type="number" min="0"></div></div>
-<label>Product image</label><input id="f" type="file" accept="image/*">
-<p><button id="add">Add product</button></p></div>
-<div class="box"><h2>Your products</h2><div id="list">Loading…</div></div>
-</div><div id="msg"></div>
-</main>
-<script>
-/* Paste your Supabase values (same as index.html) */
-const URL_='https://ipemgdvwjitffgfmhpem.supabase.co',KEY='sb_publishable_Ijbjb8JWo7uE1Jzza8hDFQ_zzmY4lwl',BUCKET='product-images';
-const $=id=>document.getElementById(id);let token=sessionStorage.getItem('zp_token');
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const say=t=>$('msg').textContent=t;
-const H=(x={})=>({apikey:KEY,Authorization:'Bearer '+(token||KEY),'Content-Type':'application/json',...x});
-async function api(path,opt={}){const r=await fetch(URL_+path,{...opt,headers:H(opt.headers)});if(r.status===401||r.status===403&&!opt.quiet){}
-if(!r.ok)throw new Error((await r.text())||r.status);const t=await r.text();return t?JSON.parse(t):null}
-function show(){const on=!!token;$('login').classList.toggle('hide',on);$('app').classList.toggle('hide',!on);$('logout').classList.toggle('hide',!on);if(on)load()}
-$('go').onclick=async()=>{try{const r=await fetch(URL_+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email:$('em').value,password:$('pw').value})});const j=await r.json();if(!r.ok)throw new Error(j.error_description||j.msg||'Login failed');token=j.access_token;sessionStorage.setItem('zp_token',token);say('');show()}catch(e){say(e.message)}};
-$('logout').onclick=()=>{token=null;sessionStorage.removeItem('zp_token');show()};
 
-async function load(){
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ziorpurea Admin</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  padding:20px;
+  font-family:Arial,sans-serif;
+  background:#f6f5f2;
+  color:#292929
+}
+main{max-width:1000px;margin:auto}
+h1{margin-top:0}
+.box{
+  background:#fff;
+  padding:20px;
+  border-radius:14px;
+  margin-bottom:20px;
+  box-shadow:0 3px 15px #00000008
+}
+input,textarea,button{
+  font:inherit;
+  padding:11px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  max-width:100%
+}
+input,textarea{width:100%;margin:5px 0 12px}
+button{cursor:pointer;border:0;background:#292929;color:white}
+button:disabled{opacity:.5;cursor:wait}
+.ghost{background:#eee;color:#222}
+.del{background:#b42318;color:white}
+form .primary{width:100%}
+.item{
+  display:grid;
+  grid-template-columns:90px minmax(0,1fr);
+  gap:14px;
+  border-bottom:1px solid #eee;
+  padding:16px 0
+}
+.item:last-child{border-bottom:0}
+.item img{
+  width:90px;height:90px;
+  object-fit:cover;border-radius:9px;
+  background:#f0f0f0
+}
+.item strong{overflow-wrap:anywhere}
+.pr{
+  display:flex;gap:8px;align-items:center;
+  flex-wrap:wrap;margin-top:9px
+}
+.pr input[type=number]{width:110px;margin:0}
+.pr input[type=file]{flex:1;min-width:150px;margin:0}
+.pr button{white-space:nowrap}
+.acts{
+  grid-column:1/-1;
+  display:flex;gap:8px;flex-wrap:wrap
+}
+.acts button{flex:1}
+#msg{white-space:pre-wrap;margin:12px 0;color:#345}
+.muted{font-size:13px;color:#666}
+.hidden{display:none!important}
+@media(min-width:650px){
+  .item{grid-template-columns:100px minmax(0,1fr) auto}
+  .item img{width:100px;height:100px}
+  .acts{grid-column:auto;flex-direction:column;min-width:100px}
+}
+</style>
+</head>
+
+<body>
+<main>
+  <h1>Ziorpurea Admin</h1>
+  <p class="muted">Manage your products, prices, images and stock.</p>
+
+  <div class="box" id="loginBox">
+    <h2>Admin Login</h2>
+    <form id="loginForm">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" required>
+
+      <label for="password">Password</label>
+      <input id="password" type="password"
+        autocomplete="current-password" required>
+
+      <button class="primary" id="loginBtn" type="submit">Login</button>
+    </form>
+  </div>
+
+  <div id="adminArea" class="hidden">
+    <div class="box">
+      <div class="pr" style="justify-content:space-between">
+        <h2>Add new product</h2>
+        <button class="ghost" id="logout" type="button">Logout</button>
+      </div>
+
+      <form id="addForm">
+        <label for="n">Product name</label>
+        <input id="n" required placeholder="Product name">
+
+        <label for="d">Description</label>
+        <textarea id="d" rows="3" placeholder="Product description"></textarea>
+
+        <label for="p">Price (Rs.)</label>
+        <input id="p" type="number" min="0" step="any" required
+          placeholder="Product price">
+
+        <label for="f">Product image</label>
+        <input id="f" type="file" accept="image/*">
+
+        <button class="primary" id="add" type="submit">Add product</button>
+      </form>
+    </div>
+
+    <div class="box">
+      <div class="pr" style="justify-content:space-between">
+        <h2>Your products</h2>
+        <button class="ghost" id="refresh" type="button">Refresh</button>
+      </div>
+      <div id="list">Loading products...</div>
+    </div>
+  </div>
+
+  <div id="msg" role="status" aria-live="polite"></div>
+</main>
+
+<script>
+const URL_ = 'https://ipemgdvwjitffgfmhpem.supabase.co';
+const KEY = 'sb_publishable_Ijbjb8JWo7uE1Jzza8hDFQ_zzmY4lwl';
+const BUCKET = 'product-images';
+
+let token = sessionStorage.getItem('zior_admin_token') || '';
+
+const $ = id => document.getElementById(id);
+
+function say(message) {
+  $('msg').textContent = message || '';
+}
+
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  })[char]);
+}
+
+async function api(path, options = {}) {
+  const headers = {
+    apikey: KEY,
+    Authorization: 'Bearer ' + token,
+    ...(options.body ? {'Content-Type':'application/json'} : {}),
+    ...(options.headers || {})
+  };
+
+  const response = await fetch(URL_ + path, {
+    ...options,
+    headers,
+    cache: 'no-store'
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || 'Request failed: ' + response.status);
+  }
+
+  if (response.status === 204) return null;
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
+}
+
+function show() {
+  $('loginBox').classList.toggle('hidden', !!token);
+  $('adminArea').classList.toggle('hidden', !token);
+}
+
+async function uploadImage(file) {
+  if (!file) return null;
+
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Please select an image file.');
+  }
+
+  const safeName = file.name
+    .replace(/[^a-z0-9.]+/gi, '-')
+    .toLowerCase();
+
+  const path = Date.now() + '-' +
+    Math.random().toString(36).slice(2, 8) + '-' + safeName;
+
+  const response = await fetch(
+    `${URL_}/storage/v1/object/${BUCKET}/${path}`,
+    {
+      method: 'POST',
+      headers: {
+        apikey: KEY,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': file.type || 'application/octet-stream'
+      },
+      body: file
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Image upload failed: ' + await response.text());
+  }
+
+  return `${URL_}/storage/v1/object/public/${BUCKET}/${path}`;
+}
+
+async function load() {
+  $('list').textContent = 'Loading products...';
+
   try {
     const rows = await api(
       '/rest/v1/products?select=*&order=created_at.desc'
     );
 
-    $('list').innerHTML = rows.length
-      ? rows.map(p => `
-        <div class="item">
-          <img src="${esc(p.image_url || '')}" alt="">
-          <div>
-            <strong>${esc(p.name)}</strong>
-            <div class="pr">
-              <label>Price (Rs.)</label>
-              <input type="number" min="0" id="pr${esc(p.id)}"
-                value="${p.price ?? 0}"">
-              <button class="ghost" data-save="${esc(p.id)}">Save price</button>
-            </div>
-            <div>Stock: ${Number(p.stock || 0)}</div>
-            <div>${p.active ? 'Visible' : 'Hidden'}</div>
+    if (!rows.length) {
+      $('list').textContent = 'No products yet.';
+      return;
+    }
+
+    $('list').innerHTML = rows.map(p => `
+      <div class="item">
+        <img
+          src="${esc(p.image_url || '')}"
+          alt="${esc(p.name)}"
+          loading="lazy"
+        >
+
+        <div>
+          <strong>${esc(p.name)}</strong>
+
+          <div class="pr">
+            <label for="pr${esc(p.id)}">Price (Rs.)</label>
+            <input
+              type="number"
+              min="0"
+              step="any"
+              id="pr${esc(p.id)}"
+              value="${esc(p.price ?? 0)}"
+            >
+            <button class="ghost" data-save="${esc(p.id)}" type="button">
+              Save price
+            </button>
           </div>
-          <div class="acts">
-            <button class="ghost" data-stock="${esc(p.id)}">
-              ${Number(p.stock) > 0 ? 'Sold out' : 'Restock'}
+
+          <div class="pr">
+            <input
+              type="file"
+              accept="image/*"
+              id="img${esc(p.id)}"
+              aria-label="Choose new image for ${esc(p.name)}"
+            >
+            <button class="ghost" data-image="${esc(p.id)}" type="button">
+              Replace image
             </button>
-            <button class="ghost" data-active="${esc(p.id)}">
-              ${p.active ? 'Hide' : 'Show'}
-            </button>
-            <button class="del" data-delete="${esc(p.id)}">Delete</button>
+          </div>
+
+          <div class="muted" style="margin-top:9px">
+            Stock: ${Number(p.stock || 0)}
+            · ${p.active ? 'Visible' : 'Hidden'}
           </div>
         </div>
-      `).join('')
-      : 'No products yet.';
 
-    $('list').querySelectorAll('[data-save]').forEach(b => {
-      b.onclick = async () => {
-        const id = b.dataset.save;
-        const price = Number($('pr' + id).value);
-        if (!Number.isFinite(price) || price < 0) {
+        <div class="acts">
+          <button class="ghost" data-stock="${esc(p.id)}" type="button">
+            ${Number(p.stock) > 0 ? 'Sold out' : 'Restock'}
+          </button>
+
+          <button class="ghost" data-active="${esc(p.id)}" type="button">
+            ${p.active ? 'Hide' : 'Show'}
+          </button>
+
+          <button class="del" data-delete="${esc(p.id)}" type="button">
+            Delete
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    $('list').querySelectorAll('[data-save]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.save;
+        const value = $('pr' + id).value;
+        const price = Number(value);
+
+        if (value.trim() === '' || !Number.isFinite(price) || price < 0) {
           say('Enter a valid price.');
           return;
         }
+
+        button.disabled = true;
+        say('Saving price...');
+
         try {
           await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
             method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
             body: JSON.stringify({price})
           });
-          say('Price saved.');
+
+          say('Price updated successfully.');
           await load();
-        } catch(e) { say(e.message); }
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
       };
     });
 
-    $('list').querySelectorAll('[data-stock]').forEach(b => {
-      b.onclick = async () => {
-        const p = rows.find(x => String(x.id) === b.dataset.stock);
+    $('list').querySelectorAll('[data-image]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.image;
+        const file = $('img' + id).files[0];
+
+        if (!file) {
+          say('Pehle product ki new image select karo.');
+          return;
+        }
+
+        button.disabled = true;
+        say('Uploading new image...');
+
         try {
-          await api('/rest/v1/products?id=eq.' + encodeURIComponent(p.id), {
+          const image_url = await uploadImage(file);
+
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
             method: 'PATCH',
-            body: JSON.stringify({stock: Number(p.stock) > 0 ? 0 : 10})
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({image_url})
           });
-          say('Stock updated.');
+
+          say('Image replace ho gayi! Product update ho gaya.');
           await load();
-        } catch(e) { say(e.message); }
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
       };
     });
 
-    $('list').querySelectorAll('[data-active]').forEach(b => {
-      b.onclick = async () => {
-        const p = rows.find(x => String(x.id) === b.dataset.active);
+    $('list').querySelectorAll('[data-stock]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.stock;
+        const product = rows.find(p => String(p.id) === String(id));
+        if (!product) return;
+
+        const stock = Number(product.stock || 0) > 0 ? 0 : 10;
+
+        button.disabled = true;
+        say('Updating stock...');
+
         try {
-          await api('/rest/v1/products?id=eq.' + encodeURIComponent(p.id), {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
             method: 'PATCH',
-            body: JSON.stringify({active: !p.active})
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({stock})
           });
-          say('Visibility updated.');
+
+          say(stock === 0 ? 'Product marked sold out.' : 'Product restocked.');
           await load();
-        } catch(e) { say(e.message); }
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
       };
     });
 
-    $('list').querySelectorAll('[data-delete]').forEach(b => {
-      b.onclick = async () => {
-        const p = rows.find(x => String(x.id) === b.dataset.delete);
-        if (!confirm('Delete "' + p.name + '" permanently?')) return;
+    $('list').querySelectorAll('[data-active]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.active;
+        const product = rows.find(p => String(p.id) === String(id));
+        if (!product) return;
+
+        button.disabled = true;
+        say('Updating visibility...');
+
         try {
-          await api('/rest/v1/products?id=eq.' + encodeURIComponent(p.id), {
-            method: 'DELETE'
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({active:!product.active})
           });
+
+          say('Product visibility updated.');
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+    $('list').querySelectorAll('[data-delete]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.delete;
+        const product = rows.find(p => String(p.id) === String(id));
+        if (!product) return;
+
+        if (!confirm(`Delete "${product.name}"? This cannot be undone.`)) {
+          return;
+        }
+
+        button.disabled = true;
+        say('Deleting product...');
+
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'DELETE',
+            headers: {'Prefer':'return=minimal'}
+          });
+
           say('Product deleted.');
           await load();
-        } catch(e) { say(e.message); }
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
       };
     });
-  } catch(e) {
-    say('Could not load products: ' + e.message);
+
+  } catch (error) {
+    $('list').textContent = 'Could not load products.';
+    say(error.message);
   }
 }
-const num = v => v === '' || v == null ? null : Number(v);
-$('add').onclick=async()=>{const name=$('n').value.trim();if(!name)return say('Name is required.');$('add').disabled=true;say('Adding…');
-try{let image_url=null;const f=$('f').files[0];
-if(f){const path=Date.now()+'-'+f.name.replace(/[^a-z0-9.]+/gi,'-').toLowerCase();const r=await fetch(`${URL_}/storage/v1/object/${BUCKET}/${path}`,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':f.type},body:f});if(!r.ok)throw new Error('Image upload failed: '+await r.text());image_url=`${URL_}/storage/v1/object/public/${BUCKET}/${path}`}
 
-await api('/rest/v1/products',{method:'POST',body:JSON.stringify({name,description:$('d').value,price: Number($('p').value || 0),image_url,stock:10,active:true})});
+$('loginForm').addEventListener('submit', async event => {
+  event.preventDefault();
 
-['n','t','d','p','cp','f'].forEach(i=>$(i).value='');say('Product added. It is live on the website.');load()}catch(e){say(e.message)}$('add').disabled=false};
+  const email = $('email').value.trim();
+  const password = $('password').value;
+
+  $('loginBtn').disabled = true;
+  say('Logging in...');
+
+  try {
+    const response = await fetch(
+      `${URL_}/auth/v1/token?grant_type=password`,
+      {
+        method:'POST',
+        headers:{
+          apikey:KEY,
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({email,password})
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.msg || data.message || data.error_description ||
+        'Login failed. Check your email and password.');
+    }
+
+    if (!data.access_token) {
+      throw new Error('Login token was not returned.');
+    }
+
+    token = data.access_token;
+    sessionStorage.setItem('zior_admin_token', token);
+
+    show();
+    await load();
+    say('Logged in successfully.');
+
+  } catch (error) {
+    token = '';
+    sessionStorage.removeItem('zior_admin_token');
+    show();
+    say(error.message);
+  } finally {
+    $('loginBtn').disabled = false;
+  }
+});
+
+$('logout').onclick = () => {
+  token = '';
+  sessionStorage.removeItem('zior_admin_token');
+  show();
+  say('Logged out.');
+};
+
+$('refresh').onclick = load;
+
+$('addForm').addEventListener('submit', async event => {
+  event.preventDefault();
+
+  const name = $('n').value.trim();
+  const description = $('d').value.trim();
+  const priceValue = $('p').value;
+  const price = Number(priceValue);
+  const file = $('f').files[0];
+
+  if (!name) {
+    say('Product name is required.');
+    return;
+  }
+
+  if (priceValue.trim() === '' || !Number.isFinite(price) || price < 0) {
+    say('Enter a valid price.');
+    return;
+  }
+
+  $('add').disabled = true;
+  say('Adding product...');
+
+  try {
+    let image_url = null;
+
+    if (file) {
+      image_url = await uploadImage(file);
+    }
+
+    await api('/rest/v1/products', {
+      method:'POST',
+      headers:{'Prefer':'return=minimal'},
+      body:JSON.stringify({
+        name,
+        description,
+        price,
+        image_url,
+        stock:10,
+        active:true
+      })
+    });
+
+    $('addForm').reset();
+    say('Product added successfully!');
+    await load();
+
+  } catch (error) {
+    say(error.message);
+  } finally {
+    $('add').disabled = false;
+  }
+});
+
 show();
-</script></body></html>
+
+if (token) {
+  load();
+}
+</script>
+</body>
+</html>
