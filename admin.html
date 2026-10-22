@@ -196,6 +196,47 @@ async function api(path, options = {}) {
 }
 
 function show() {
+  
+async function loadWhatsAppNumber() {
+  try {
+    const rows = await api(
+      '/rest/v1/site_settings?id=eq.1&select=whatsapp_number'
+    );
+
+    $('whatsappNumber').value =
+      rows.length ? rows[0].whatsapp_number : '923138681319';
+  } catch (error) {
+    say('WhatsApp number load nahi hua: ' + error.message);
+  }
+}
+
+$('saveWhatsApp').onclick = async () => {
+  const number = $('whatsappNumber').value.replace(/\D/g, '');
+
+  if (!/^92\d{10}$/.test(number)) {
+    say('Valid Pakistani WhatsApp number likho, jaise 923138681319.');
+    return;
+  }
+
+  $('saveWhatsApp').disabled = true;
+  say('Saving WhatsApp number...');
+
+  try {
+    await api('/rest/v1/site_settings?id=eq.1', {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ whatsapp_number: number })
+    });
+
+    say('WhatsApp number successfully saved!');
+    $('whatsappNumber').value = number;
+  } catch (error) {
+    say('Save nahi hua: ' + error.message);
+  } finally {
+    $('saveWhatsApp').disabled = false;
+  }
+};
+  
   $('loginBox').classList.toggle('hidden', !!token);
   $('adminArea').classList.toggle('hidden', !token);
 }
