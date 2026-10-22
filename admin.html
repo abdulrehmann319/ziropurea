@@ -54,7 +54,7 @@ async function load(){
             <div class="pr">
               <label>Price (Rs.)</label>
               <input type="number" min="0" id="pr${esc(p.id)}"
-                value="${p.price ?? 0}">
+                value="${p.price ?? 0}"">
               <button class="ghost" data-save="${esc(p.id)}">Save price</button>
             </div>
             <div>Stock: ${Number(p.stock || 0)}</div>
