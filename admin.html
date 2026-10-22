@@ -240,10 +240,6 @@ $('saveWhatsApp').onclick = async () => {
   }
 };
   
-  $('loginBox').classList.toggle('hidden', !!token);
-  $('adminArea').classList.toggle('hidden', !token);
-}
-
 async function uploadImage(file) {
   if (!file) return null;
 
