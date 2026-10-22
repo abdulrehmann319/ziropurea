@@ -147,16 +147,19 @@ async function loadProducts() {
   if (SUPABASE_URL.includes('YOUR-PROJECT')) return;
 
   try {
-    const r = await fetch(
-      SUPABASE_URL +
-      '/rest/v1/products?select=*&active=eq.true&order=created_at.desc',
-      {
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: 'Bearer ' + SUPABASE_ANON_KEY
-        }
-      }
-    );
+    
+const r = await fetch(
+  SUPABASE_URL +
+  '/rest/v1/products?select=*&active=eq.true&order=created_at.desc',
+  {
+    cache: 'no-store',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: 'Bearer ' + SUPABASE_ANON_KEY
+    }
+  }
+);
+
 
     if (!r.ok) throw new Error('Products load failed: ' + r.status);
 
