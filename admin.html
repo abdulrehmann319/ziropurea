@@ -196,7 +196,10 @@ async function api(path, options = {}) {
 }
 
 function show() {
-  
+  $('loginBox').classList.toggle('hidden', !!token);
+  $('adminArea').classList.toggle('hidden', !token);
+}
+
 async function loadWhatsAppNumber() {
   try {
     const rows = await api(
