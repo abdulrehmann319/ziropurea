@@ -137,7 +137,7 @@ async function load(){
     say('Could not load products: ' + e.message);
   }
 }
-
+const num = v => v === '' || v == null ? null : Number(v);
 $('add').onclick=async()=>{const name=$('n').value.trim();if(!name)return say('Name is required.');$('add').disabled=true;say('Adding…');
 try{let image_url=null;const f=$('f').files[0];
 if(f){const path=Date.now()+'-'+f.name.replace(/[^a-z0-9.]+/gi,'-').toLowerCase();const r=await fetch(`${URL_}/storage/v1/object/${BUCKET}/${path}`,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':f.type},body:f});if(!r.ok)throw new Error('Image upload failed: '+await r.text());image_url=`${URL_}/storage/v1/object/public/${BUCKET}/${path}`}
