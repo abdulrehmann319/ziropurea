@@ -142,13 +142,54 @@ function productCard(p){const sale=typeof p.compare_price==='number'&&typeof p.p
 const price=typeof p.price==='number'?(sale?`<s class="was">${money(p.compare_price)}</s>`:'')+money(p.price):'Price on request';
 const out=p.in_stock===false;
 return `<article class="card"><div class="product-image">${out?'<span class="badge">Sold out</span>':sale?'<span class="badge sale">Sale</span>':''}<img src="${escapeHTML(p.image_url||'')}" alt="Ziorpure ${escapeHTML(p.name)}"></div><div class="info"><span class="tag">${escapeHTML(p.tag||'')}</span><h3>${escapeHTML(p.name)}</h3><p>${escapeHTML(p.description||'')}</p><div class="bottom"><span class="price">${price}</span><button class="order add-cart" data-product="${escapeHTML(p.name)}" ${out?'disabled':''}>${out?'Sold out':'Add to bag'}</button></div></div></article>`}
-async function loadProducts(){if(SUPABASE_URL.includes('YOUR-PROJECT'))return;
-try{const r=await fetch(SUPABASE_URL+'/rest/v1/products?select=*&is_active=eq.true&order=sort_order.asc',{headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY}});
-if(!r.ok)throw new Error(r.status);const rows=await r.json();if(!rows.length)return;
-rows.forEach(p=>{PRICES[p.name]=typeof p.price==='number'?p.price:null});
-document.getElementById('products-grid').innerHTML=rows.map(productCard).join('');
-document.getElementById('review-product').innerHTML='<option value="">Choose a product</option>'+rows.map(p=>`<option>${escapeHTML(p.name)}</option>`).join('')+'<option>Overall experience</option>';
-Object.keys(cart).forEach(n=>{if(!(n in PRICES))delete cart[n]});renderCart()}catch(e){console.warn('Supabase load failed, showing default products',e)}}
+
+async function loadProducts() {
+  if (SUPABASE_URL.includes('YOUR-PROJECT')) return;
+
+  try {
+    const r = await fetch(
+      SUPABASE_URL +
+      '/rest/v1/products?select=*&active=eq.true&order=created_at.desc',
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: 'Bearer ' + SUPABASE_ANON_KEY
+        }
+      }
+    );
+
+    if (!r.ok) throw new Error('Products load failed: ' + r.status);
+
+    const rows = await r.json();
+    if (!rows.length) return;
+
+    rows.forEach(p => {
+      PRICES[p.name] = typeof p.price === 'number' ? p.price : null;
+    });
+
+    document.getElementById('products-grid').innerHTML =
+      rows.map(p => productCard({
+        ...p,
+        tag: '',
+        in_stock: Number(p.stock) > 0,
+        compare_price: null
+      })).join('');
+
+    document.getElementById('review-product').innerHTML =
+      '<option value="">Choose a product</option>' +
+      rows.map(p => '<option>' + escapeHTML(p.name) + '</option>').join('') +
+      '<option>Overall experience</option>';
+
+    Object.keys(cart).forEach(n => {
+      if (!(n in PRICES)) delete cart[n];
+    });
+
+    renderCart();
+  } catch (e) {
+    console.warn('Supabase load failed:', e);
+  }
+}
+
 document.getElementById('year').textContent=new Date().getFullYear();
 const STORAGE_KEY='ziorpure_customer_reviews_v1';let selectedRating=5;
 const picker=document.getElementById('star-picker');
