@@ -1,0 +1,943 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ziorpure Admin</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  padding:20px;
+  font-family:Arial,sans-serif;
+  background:#f6f5f2;
+  color:#292929
+}
+main{max-width:1000px;margin:auto}
+h1{margin-top:0}
+.box{
+  background:#fff;
+  padding:20px;
+  border-radius:14px;
+  margin-bottom:20px;
+  box-shadow:0 3px 15px #00000008
+}
+input,textarea,button{
+  font:inherit;
+  padding:11px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  max-width:100%
+}
+input,textarea{width:100%;margin:5px 0 12px}
+button{cursor:pointer;border:0;background:#292929;color:white}
+button:disabled{opacity:.5;cursor:wait}
+.ghost{background:#eee;color:#222}
+.del{background:#b42318;color:white}
+form .primary{width:100%}
+.item{
+  display:grid;
+  grid-template-columns:90px minmax(0,1fr);
+  gap:14px;
+  border-bottom:1px solid #eee;
+  padding:16px 0
+}
+.item:last-child{border-bottom:0}
+.item img{
+  width:90px;height:90px;
+  object-fit:cover;border-radius:9px;
+  background:#f0f0f0
+}
+.item strong{overflow-wrap:anywhere}
+.pr{
+  display:flex;gap:8px;align-items:center;
+  flex-wrap:wrap;margin-top:9px
+}
+.pr input[type=number]{width:110px;margin:0}
+.pr input[type=file]{flex:1;min-width:150px;margin:0}
+.pr button{white-space:nowrap}
+.acts{
+  grid-column:1/-1;
+  display:flex;gap:8px;flex-wrap:wrap
+}
+.acts button{flex:1}
+#msg{white-space:pre-wrap;margin:12px 0;color:#345}
+.muted{font-size:13px;color:#666}
+.hidden{display:none!important}
+@media(min-width:650px){
+  .item{grid-template-columns:100px minmax(0,1fr) auto}
+  .item img{width:100px;height:100px}
+  .acts{grid-column:auto;flex-direction:column;min-width:100px}
+}
+
+/* reviews manager (added) */
+.rv-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+.rv-tabs button{background:#eee;color:#222}.rv-tabs button.on{background:#292929;color:#fff}
+.rv-badge{display:inline-block;min-width:22px;padding:2px 8px;margin-left:6px;border-radius:99px;background:#b42318;color:#fff;font-size:12px;text-align:center;vertical-align:middle}
+.rv-badge.zero{background:#cfcfcf;color:#444}
+.rv{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;border-bottom:1px solid #eee;padding:16px 0}
+.rv:last-child{border-bottom:0}
+.rv .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rv .stars{color:#d49a00;letter-spacing:2px}
+.rv p{margin:8px 0 6px;overflow-wrap:anywhere;white-space:pre-wrap}
+.rv .pill{font-size:12px;padding:3px 9px;border-radius:99px;background:#fff3cd;color:#7a5a00}
+.rv .pill.ok{background:#d9f2e1;color:#14572b}
+.rv .acts{grid-column:auto;flex-direction:row}
+.rv .acts button{flex:0 0 auto;min-width:96px}
+.ok-btn{background:#14793a;color:#fff}
+@media(min-width:650px){.rv{grid-template-columns:minmax(0,1fr) auto}.rv .acts{flex-direction:column;min-width:110px}}
+</style>
+</head>
+
+<body>
+<main>
+  <h1>Ziorpure Admin</h1>
+  <p class="muted">Manage your products, prices, images, stock and reviews.</p>
+
+  <div class="box" id="loginBox">
+    <h2>Admin Login</h2>
+    <form id="loginForm">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" required>
+
+      <label for="password">Password</label>
+      <input id="password" type="password"
+        autocomplete="current-password" required>
+
+      <button class="primary" id="loginBtn" type="submit">Login</button>
+    </form>
+  </div>
+
+  <div id="adminArea" class="hidden">
+    
+<div class="box">
+  <h2>WhatsApp Settings</h2>
+  <label for="whatsappNumber">WhatsApp number</label>
+  <input
+    id="whatsappNumber"
+    type="tel"
+    inputmode="numeric"
+    placeholder="923001234567"
+    autocomplete="tel"
+  >
+  <p class="muted">
+    Country code ke saath number likho, + ya spaces ke baghair.
+  </p>
+  <button id="saveWhatsApp" type="button">Save Number</button>
+</div>
+    
+    <div class="box" id="heroBox">
+      <h2>Home page banner (Hero)</h2>
+      <p class="muted">Video ya image upload karo. Ye website ke sab se upar wale banner mein chalegi. Video ki pehli frame se poster apne aap ban jata hai.</p>
+
+      <div id="heroPreview" class="muted" style="margin-bottom:10px">Loading...</div>
+
+      <label for="heroFile">Banner video (MP4) ya image</label>
+      <input id="heroFile" type="file" accept="video/mp4,video/*,image/*">
+      <div class="pr" style="margin-bottom:16px">
+        <button id="heroUpload" type="button">Upload &amp; use</button>
+        <button class="ghost" id="heroReset" type="button">Reset to default</button>
+      </div>
+
+      <label for="heroEyebrow">Chhoti line (jaise: Our new)</label>
+      <input id="heroEyebrow" maxlength="40" placeholder="Our new">
+      <label for="heroTitle1">Heading line 1 (jaise: Hair Care)</label>
+      <input id="heroTitle1" maxlength="40" placeholder="Hair Care">
+      <label for="heroTitle2">Heading line 2 (jaise: Collection)</label>
+      <input id="heroTitle2" maxlength="40" placeholder="Collection">
+      <label for="heroText">Neeche ka text</label>
+      <textarea id="heroText" rows="3" maxlength="300" placeholder="Banner ka chhota description"></textarea>
+      <button id="heroSaveText" type="button">Save banner text</button>
+      <p class="muted" style="margin-bottom:0">Text khali chhodo to website ka purana text hi dikhega.</p>
+    </div>
+
+    <div class="box" id="reviewsBox">
+      <div class="pr" style="justify-content:space-between">
+        <h2>Customer reviews <span class="rv-badge zero" id="rvPending">0</span></h2>
+        <button class="ghost" id="rvRefresh" type="button">Refresh</button>
+      </div>
+      <p class="muted">Naye reviews pehle "Pending" mein aate hain. Approve karne par hi website par dikhte hain.</p>
+      <div class="rv-tabs" id="rvTabs">
+        <button type="button" data-f="pending" class="on">Pending</button>
+        <button type="button" data-f="approved">Approved</button>
+        <button type="button" data-f="all">All</button>
+      </div>
+      <div id="rvList">Loading reviews...</div>
+    </div>
+
+    <div class="box">
+      <div class="pr" style="justify-content:space-between">
+        <h2>Add new product</h2>
+        <button class="ghost" id="logout" type="button">Logout</button>
+      </div>
+
+      <form id="addForm">
+        <label for="n">Product name</label>
+        <input id="n" required placeholder="Product name">
+
+        <label for="d">Description</label>
+        <textarea id="d" rows="3" placeholder="Product description"></textarea>
+
+        <label for="p">Price (Rs.)</label>
+        <input id="p" type="number" min="0" step="any" required
+          placeholder="Product price">
+
+        <label for="st">Stock quantity</label>
+        <input id="st" type="number" min="0" step="1" value="10" required
+          placeholder="Kitna stock hai?">
+
+        <label for="f">Product image</label>
+        <input id="f" type="file" accept="image/*">
+
+        <button class="primary" id="add" type="submit">Add product</button>
+      </form>
+    </div>
+
+    <div class="box">
+      <div class="pr" style="justify-content:space-between">
+        <h2>Your products</h2>
+        <button class="ghost" id="refresh" type="button">Refresh</button>
+      </div>
+      <div id="list">Loading products...</div>
+    </div>
+  </div>
+
+  <div id="msg" role="status" aria-live="polite"></div>
+</main>
+
+<script>
+const URL_ = 'https://ipemgdvwjitffgfmhpem.supabase.co';
+const KEY = 'sb_publishable_Ijbjb8JWo7uE1Jzza8hDFQ_zzmY4lwl';
+const BUCKET = 'product-images';
+
+let token = sessionStorage.getItem('zior_admin_token') || '';
+
+const $ = id => document.getElementById(id);
+
+function say(message) {
+  $('msg').textContent = message || '';
+}
+
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  })[char]);
+}
+
+async function api(path, options = {}) {
+  const headers = {
+    apikey: KEY,
+    Authorization: 'Bearer ' + token,
+    ...(options.body ? {'Content-Type':'application/json'} : {}),
+    ...(options.headers || {})
+  };
+
+  const response = await fetch(URL_ + path, {
+    ...options,
+    headers,
+    cache: 'no-store'
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || 'Request failed: ' + response.status);
+  }
+
+  if (response.status === 204) return null;
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
+}
+
+function show() {
+  $('loginBox').classList.toggle('hidden', !!token);
+  $('adminArea').classList.toggle('hidden', !token);
+}
+
+async function loadWhatsAppNumber() {
+  try {
+    const rows = await api(
+      '/rest/v1/site_settings?id=eq.1&select=whatsapp_number'
+    );
+
+    $('whatsappNumber').value =
+      rows.length ? rows[0].whatsapp_number : '923138681319';
+  } catch (error) {
+    say('WhatsApp number load nahi hua: ' + error.message);
+  }
+}
+
+$('saveWhatsApp').onclick = async () => {
+  const number = $('whatsappNumber').value.replace(/\D/g, '');
+
+  if (!/^92\d{10}$/.test(number)) {
+    say('Valid Pakistani WhatsApp number likho, jaise 923138681319.');
+    return;
+  }
+
+  $('saveWhatsApp').disabled = true;
+  say('Saving WhatsApp number...');
+
+  try {
+    await api('/rest/v1/site_settings?id=eq.1', {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ whatsapp_number: number })
+    });
+
+    say('WhatsApp number successfully saved!');
+    $('whatsappNumber').value = number;
+  } catch (error) {
+    say('Save nahi hua: ' + error.message);
+  } finally {
+    $('saveWhatsApp').disabled = false;
+  }
+};
+  
+async function uploadImage(file) {
+  if (!file) return null;
+
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Please select an image file.');
+  }
+
+  const safeName = file.name
+    .replace(/[^a-z0-9.]+/gi, '-')
+    .toLowerCase();
+
+  const path = Date.now() + '-' +
+    Math.random().toString(36).slice(2, 8) + '-' + safeName;
+
+  const response = await fetch(
+    `${URL_}/storage/v1/object/${BUCKET}/${path}`,
+    {
+      method: 'POST',
+      headers: {
+        apikey: KEY,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': file.type || 'application/octet-stream'
+      },
+      body: file
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Image upload failed: ' + await response.text());
+  }
+
+  return `${URL_}/storage/v1/object/public/${BUCKET}/${path}`;
+}
+
+async function load() {
+  $('list').textContent = 'Loading products...';
+
+  try {
+    const rows = await api(
+      '/rest/v1/products?select=*&order=created_at.desc'
+    );
+
+    if (!rows.length) {
+      $('list').textContent = 'No products yet.';
+      return;
+    }
+
+    $('list').innerHTML = rows.map(p => `
+      <div class="item">
+        <img
+          src="${esc(p.image_url || '')}"
+          alt="${esc(p.name)}"
+          loading="lazy"
+        >
+
+        <div>
+          <strong>${esc(p.name)}</strong>
+
+          <div style="margin-top:8px">
+            <input id="nm${esc(p.id)}" type="text" maxlength="80"
+              value="${esc(p.name)}" aria-label="Product name"
+              style="margin:0 0 8px">
+            <textarea id="ds${esc(p.id)}" rows="2" aria-label="Description"
+              style="margin:0 0 8px">${esc(p.description || '')}</textarea>
+            <button class="ghost" data-savedetails="${esc(p.id)}" type="button">
+              Save name &amp; description
+            </button>
+          </div>
+
+          <div class="pr">
+            <label for="pr${esc(p.id)}">Price (Rs.)</label>
+            <input
+              type="number"
+              min="0"
+              step="any"
+              id="pr${esc(p.id)}"
+              value="${esc(p.price ?? 0)}"
+            >
+            <button class="ghost" data-save="${esc(p.id)}" type="button">
+              Save price
+            </button>
+          </div>
+
+          <div class="pr">
+            <input
+              type="file"
+              accept="image/*"
+              id="img${esc(p.id)}"
+              aria-label="Choose new image for ${esc(p.name)}"
+            >
+            <button class="ghost" data-image="${esc(p.id)}" type="button">
+              Replace image
+            </button>
+          </div>
+
+          <div class="muted" style="margin-top:9px">
+            Stock: ${Number(p.stock || 0)}
+            · ${p.active ? 'Visible' : 'Hidden'}
+            ${Number(p.stock) > 0 && Number(p.stock) <= 3
+              ? '· <b style="color:#b42318">Low stock</b>' : ''}
+            ${Number(p.stock || 0) <= 0
+              ? '· <b style="color:#b42318">Sold out</b>' : ''}
+          </div>
+
+          <div class="pr">
+            <label for="st${esc(p.id)}">Stock</label>
+            <button class="ghost" data-stdec="${esc(p.id)}" type="button"
+              aria-label="Decrease stock">−</button>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              id="st${esc(p.id)}"
+              value="${Number(p.stock || 0)}"
+              style="width:90px"
+            >
+            <button class="ghost" data-stinc="${esc(p.id)}" type="button"
+              aria-label="Increase stock">+</button>
+            <button class="ghost" data-setstock="${esc(p.id)}" type="button">
+              Save stock
+            </button>
+          </div>
+        </div>
+
+        <div class="acts">
+          <button class="ghost" data-stock="${esc(p.id)}" type="button">
+            ${Number(p.stock) > 0 ? 'Sold out' : 'Restock'}
+          </button>
+
+          <button class="ghost" data-active="${esc(p.id)}" type="button">
+            ${p.active ? 'Hide' : 'Show'}
+          </button>
+
+          <button class="del" data-delete="${esc(p.id)}" type="button">
+            Delete
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    $('list').querySelectorAll('[data-save]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.save;
+        const value = $('pr' + id).value;
+        const price = Number(value);
+
+        if (value.trim() === '' || !Number.isFinite(price) || price < 0) {
+          say('Enter a valid price.');
+          return;
+        }
+
+        button.disabled = true;
+        say('Saving price...');
+
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({price})
+          });
+
+          say('Price updated successfully.');
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+    $('list').querySelectorAll('[data-image]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.image;
+        const file = $('img' + id).files[0];
+
+        if (!file) {
+          say('Pehle product ki new image select karo.');
+          return;
+        }
+
+        button.disabled = true;
+        say('Uploading new image...');
+
+        try {
+          const image_url = await uploadImage(file);
+
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({image_url})
+          });
+
+          say('Image replace ho gayi! Product update ho gaya.');
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+    $('list').querySelectorAll('[data-stock]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.stock;
+        const product = rows.find(p => String(p.id) === String(id));
+        if (!product) return;
+
+        const stock = Number(product.stock || 0) > 0 ? 0 : 10;
+
+        button.disabled = true;
+        say('Updating stock...');
+
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({stock})
+          });
+
+          say(stock === 0 ? 'Product marked sold out.' : 'Product restocked.');
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+    $('list').querySelectorAll('[data-savedetails]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.savedetails;
+        const name = $('nm' + id).value.trim();
+        const description = $('ds' + id).value.trim();
+
+        if (!name) {
+          say('Product ka naam khali nahi ho sakta.');
+          return;
+        }
+
+        button.disabled = true;
+        say('Saving name & description...');
+
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({name, description})
+          });
+
+          say('Naam aur description save ho gaye. Website par refresh karne par badal jayenge.');
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+    $('list').querySelectorAll('[data-stdec],[data-stinc]').forEach(button => {
+      button.onclick = () => {
+        const id = button.dataset.stdec || button.dataset.stinc;
+        const input = $('st' + id);
+        const now = Math.max(0, Math.floor(Number(input.value) || 0));
+        input.value = button.dataset.stinc ? now + 1 : Math.max(0, now - 1);
+      };
+    });
+
+    $('list').querySelectorAll('[data-setstock]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.setstock;
+        const raw = $('st' + id).value;
+        const stock = Number(raw);
+
+        if (raw.trim() === '' || !Number.isInteger(stock) || stock < 0) {
+          say('Stock 0 ya us se zyada poora number hona chahiye.');
+          return;
+        }
+
+        button.disabled = true;
+        say('Saving stock...');
+
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({stock})
+          });
+
+          say(stock === 0
+            ? 'Stock 0 save ho gaya. Product website par Sold out dikhega.'
+            : 'Stock save ho gaya: ' + stock);
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+    $('list').querySelectorAll('[data-active]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.active;
+        const product = rows.find(p => String(p.id) === String(id));
+        if (!product) return;
+
+        button.disabled = true;
+        say('Updating visibility...');
+
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({active:!product.active})
+          });
+
+          say('Product visibility updated.');
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+    $('list').querySelectorAll('[data-delete]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.delete;
+        const product = rows.find(p => String(p.id) === String(id));
+        if (!product) return;
+
+        if (!confirm(`Delete "${product.name}"? This cannot be undone.`)) {
+          return;
+        }
+
+        button.disabled = true;
+        say('Deleting product...');
+
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'DELETE',
+            headers: {'Prefer':'return=minimal'}
+          });
+
+          say('Product deleted.');
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+  } catch (error) {
+    $('list').textContent = 'Could not load products.';
+    say(error.message);
+  }
+}
+
+$('loginForm').addEventListener('submit', async event => {
+  event.preventDefault();
+
+  const email = $('email').value.trim();
+  const password = $('password').value;
+
+  $('loginBtn').disabled = true;
+  say('Logging in...');
+
+  try {
+    const response = await fetch(
+      `${URL_}/auth/v1/token?grant_type=password`,
+      {
+        method:'POST',
+        headers:{
+          apikey:KEY,
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({email,password})
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.msg || data.message || data.error_description ||
+        'Login failed. Check your email and password.');
+    }
+
+    if (!data.access_token) {
+      throw new Error('Login token was not returned.');
+    }
+
+    token = data.access_token;
+    sessionStorage.setItem('zior_admin_token', token);
+
+    show();
+    await load();
+await loadWhatsAppNumber();
+say('Logged in successfully.');
+
+  } catch (error) {
+    token = '';
+    sessionStorage.removeItem('zior_admin_token');
+    show();
+    say(error.message);
+  } finally {
+    $('loginBtn').disabled = false;
+  }
+});
+
+$('logout').onclick = () => {
+  token = '';
+  sessionStorage.removeItem('zior_admin_token');
+  show();
+  say('Logged out.');
+};
+
+$('refresh').onclick = load;
+
+$('addForm').addEventListener('submit', async event => {
+  event.preventDefault();
+
+  const name = $('n').value.trim();
+  const description = $('d').value.trim();
+  const priceValue = $('p').value;
+  const price = Number(priceValue);
+  const file = $('f').files[0];
+
+  if (!name) {
+    say('Product name is required.');
+    return;
+  }
+
+  if (priceValue.trim() === '' || !Number.isFinite(price) || price < 0) {
+    say('Enter a valid price.');
+    return;
+  }
+
+  const stockValue = $('st').value;
+  const stock = Number(stockValue);
+
+  if (stockValue.trim() === '' || !Number.isInteger(stock) || stock < 0) {
+    say('Stock 0 ya us se zyada poora number hona chahiye.');
+    return;
+  }
+
+  $('add').disabled = true;
+  say('Adding product...');
+
+  try {
+    let image_url = null;
+
+    if (file) {
+      image_url = await uploadImage(file);
+    }
+
+    await api('/rest/v1/products', {
+      method:'POST',
+      headers:{'Prefer':'return=minimal'},
+      body:JSON.stringify({
+        name,
+        description,
+        price,
+        image_url,
+        stock,
+        active:true
+      })
+    });
+
+    $('addForm').reset();
+    say('Product added successfully!');
+    await load();
+
+  } catch (error) {
+    say(error.message);
+  } finally {
+    $('add').disabled = false;
+  }
+});
+
+show();
+
+if (token) {
+  load();
+  loadWhatsAppNumber();
+}
+</script>
+<script>
+/* ---- reviews manager (added; uses the same api(), say(), esc(), token as above) ---- */
+(()=>{
+let rows=[],filter='pending',loaded=false;
+const list=document.getElementById('rvList');
+function stars(n){n=Math.max(0,Math.min(5,Number(n)||0));return '★'.repeat(n)+'☆'.repeat(5-n)}
+function when(d){try{return new Date(d).toLocaleString()}catch(e){return ''}}
+function paintTabs(){document.querySelectorAll('#rvTabs button').forEach(b=>b.classList.toggle('on',b.dataset.f===filter))}
+function paint(){
+  const pending=rows.filter(r=>!r.approved).length;
+  const bd=document.getElementById('rvPending');bd.textContent=pending;bd.classList.toggle('zero',!pending);
+  const view=rows.filter(r=>filter==='all'||(filter==='pending'?!r.approved:r.approved));
+  if(!view.length){list.textContent=filter==='pending'?'Koi pending review nahi hai.':filter==='approved'?'Abhi koi approved review nahi hai.':'Abhi koi review nahi aaya.';return}
+  list.innerHTML=view.map(r=>`
+    <div class="rv">
+      <div>
+        <div class="top">
+          <strong>${esc(r.name)}</strong>
+          <span class="muted">· ${esc(r.product)}</span>
+          <span class="stars" aria-label="${esc(r.rating)} out of 5">${stars(r.rating)}</span>
+          <span class="pill ${r.approved?'ok':''}">${r.approved?'Approved':'Pending'}</span>
+        </div>
+        <p>${esc(r.message)}</p>
+        <div class="muted">${esc(when(r.created_at))}</div>
+      </div>
+      <div class="acts">
+        <button class="${r.approved?'ghost':'ok-btn'}" data-toggle="${esc(r.id)}" type="button">${r.approved?'Unapprove':'Approve'}</button>
+        <button class="del" data-del="${esc(r.id)}" type="button">Delete</button>
+      </div>
+    </div>`).join('');
+  list.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=async()=>{
+    const r=rows.find(x=>String(x.id)===b.dataset.toggle);if(!r)return;
+    b.disabled=true;say(r.approved?'Review hide ho raha hai...':'Review approve ho raha hai...');
+    try{
+      await api('/rest/v1/reviews?id=eq.'+encodeURIComponent(r.id),{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({approved:!r.approved})});
+      say(r.approved?'Review website se hata diya gaya.':'Review approve ho gaya. Ab website par dikhega.');
+      await loadReviews();
+    }catch(e){say(e.message);b.disabled=false}
+  });
+  list.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
+    const r=rows.find(x=>String(x.id)===b.dataset.del);if(!r)return;
+    if(!confirm(`${r.name} ka review delete karna hai? Ye wapas nahi aayega.`))return;
+    b.disabled=true;say('Review delete ho raha hai...');
+    try{
+      await api('/rest/v1/reviews?id=eq.'+encodeURIComponent(r.id),{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+      say('Review delete ho gaya.');await loadReviews();
+    }catch(e){say(e.message);b.disabled=false}
+  });
+}
+async function loadReviews(){
+  if(!token)return;
+  list.textContent='Loading reviews...';
+  try{
+    rows=await api('/rest/v1/reviews?select=*&order=created_at.desc&limit=300')||[];
+    loaded=true;paintTabs();paint();
+  }catch(e){
+    const m=String(e.message||'');
+    list.textContent=/relation|does not exist|PGRST205|404/i.test(m)
+      ?'Reviews table nahi mili. Pehle supabase_reviews.sql ko Supabase SQL Editor mein run karo.'
+      :'Reviews load nahi hue: '+m;
+  }
+}
+document.getElementById('rvTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-f]');if(!b)return;filter=b.dataset.f;paintTabs();if(loaded)paint()});
+document.getElementById('rvRefresh').onclick=loadReviews;
+/* load when the admin area becomes visible (after login, or on page reload with a saved token) */
+const area=document.getElementById('adminArea');
+new MutationObserver(()=>{if(!area.classList.contains('hidden'))loadReviews()}).observe(area,{attributes:true,attributeFilter:['class']});
+if(token)loadReviews();
+})();
+</script>
+<script>
+/* ---- hero banner manager (added; uses api(), say(), esc(), token, URL_, KEY, BUCKET from above) ---- */
+(()=>{
+const COLS='hero_video_url,hero_poster_url,hero_image_url,hero_eyebrow,hero_title1,hero_title2,hero_text';
+const $h=id=>document.getElementById(id);
+const patch=body=>api('/rest/v1/site_settings?id=eq.1',{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify(body)});
+async function put(blob,name,type){
+  const safe=String(name||'file').replace(/[^a-z0-9.]+/gi,'-').toLowerCase();
+  const path='hero-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)+'-'+safe;
+  const r=await fetch(`${URL_}/storage/v1/object/${BUCKET}/${path}`,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':type||blob.type||'application/octet-stream'},body:blob});
+  if(!r.ok)throw new Error('Upload failed: '+await r.text());
+  return `${URL_}/storage/v1/object/public/${BUCKET}/${path}`;
+}
+function posterFrom(file){return new Promise(res=>{
+  const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';
+  const u=URL.createObjectURL(file);let fin=false;
+  const done=b=>{if(fin)return;fin=true;URL.revokeObjectURL(u);res(b)};
+  const t=setTimeout(()=>done(null),9000);
+  v.onloadeddata=()=>{try{v.currentTime=Math.min(1.2,(v.duration||2)/2)}catch(e){done(null)}};
+  v.onseeked=()=>{try{const w=540,h=Math.round(w*v.videoHeight/v.videoWidth),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(v,0,0,w,h);c.toBlob(b=>{clearTimeout(t);done(b)},'image/jpeg',.8)}catch(e){clearTimeout(t);done(null)}};
+  v.onerror=()=>{clearTimeout(t);done(null)};
+  v.src=u;});}
+function preview(c){
+  const box=$h('heroPreview');
+  if(c.hero_image_url)box.innerHTML='Abhi lagi hui: <b>image</b><br><img src="'+esc(c.hero_image_url)+'" alt="" style="height:120px;border-radius:8px;margin-top:6px">';
+  else if(c.hero_video_url)box.innerHTML='Abhi lagi hui: <b>video</b><br><video src="'+esc(c.hero_video_url)+'" poster="'+esc(c.hero_poster_url||'')+'" muted controls playsinline style="height:160px;border-radius:8px;margin-top:6px"></video>';
+  else box.textContent='Abhi website ki default video chal rahi hai (assets/shampoo-ad.mp4).';
+}
+async function loadHero(){
+  if(!token)return;
+  try{
+    const rows=await api('/rest/v1/site_settings?id=eq.1&select='+COLS);const c=(rows&&rows[0])||{};
+    $h('heroEyebrow').value=c.hero_eyebrow||'';$h('heroTitle1').value=c.hero_title1||'';$h('heroTitle2').value=c.hero_title2||'';$h('heroText').value=c.hero_text||'';
+    preview(c);
+  }catch(e){
+    $h('heroPreview').textContent=/hero_|column|42703|PGRST/i.test(String(e.message))
+      ?'Hero ke columns nahi mile. Pehle supabase_setup.sql ko Supabase SQL Editor mein run karo.'
+      :'Hero settings load nahi hui: '+e.message;
+  }
+}
+$h('heroUpload').onclick=async()=>{
+  const f=$h('heroFile').files[0];
+  if(!f){say('Pehle video ya image select karo.');return}
+  const isVid=f.type.startsWith('video/'),isImg=f.type.startsWith('image/');
+  if(!isVid&&!isImg){say('Sirf video (MP4) ya image select karo.');return}
+  if(f.size>45*1024*1024){say('File 45 MB se badi hai. Pehle chhoti (compress) karo, 5-10 MB behtar hai.');return}
+  const b=$h('heroUpload');b.disabled=true;
+  try{
+    if(isVid){
+      say('Poster ban raha hai...');const pb=await posterFrom(f);
+      say('Video upload ho rahi hai... (thora waqt lag sakta hai)');
+      const video=await put(f,f.name,f.type);
+      const poster=pb?await put(pb,'poster.jpg','image/jpeg'):null;
+      await patch({hero_video_url:video,hero_poster_url:poster,hero_image_url:null});
+    }else{
+      say('Image upload ho rahi hai...');
+      const image=await put(f,f.name,f.type);
+      await patch({hero_image_url:image,hero_video_url:null,hero_poster_url:null});
+    }
+    $h('heroFile').value='';say('Banner save ho gaya! Website refresh karne par naya banner dikhega.');await loadHero();
+  }catch(e){say(e.message)}finally{b.disabled=false}
+};
+$h('heroReset').onclick=async()=>{
+  if(!confirm('Default video wapas lagani hai?'))return;
+  try{await patch({hero_video_url:null,hero_poster_url:null,hero_image_url:null});say('Default banner wapas laga diya.');await loadHero()}catch(e){say(e.message)}
+};
+$h('heroSaveText').onclick=async()=>{
+  const v=id=>$h(id).value.trim()||null;const b=$h('heroSaveText');b.disabled=true;say('Saving banner text...');
+  try{await patch({hero_eyebrow:v('heroEyebrow'),hero_title1:v('heroTitle1'),hero_title2:v('heroTitle2'),hero_text:v('heroText')});say('Banner text save ho gaya.')}
+  catch(e){say(e.message)}finally{b.disabled=false}
+};
+const area=document.getElementById('adminArea');
+new MutationObserver(()=>{if(!area.classList.contains('hidden'))loadHero()}).observe(area,{attributes:true,attributeFilter:['class']});
+if(token)loadHero();
+})();
+</script>
+</body>
+</html>
