@@ -1,0 +1,1276 @@
+
+<!DOCTYPE html>
+<!--
+  ZIORPURE ADMIN: file map
+  1. HTML  : top bar > login > [tabs: Products | Add product | Reviews | Home page | Settings] > message toast
+  2. CSS   : base, product cards, tab bar, v2 mobile layout, v3 sequence + desktop sidebar
+  3. JS    : (a) main shop admin: login, products, price, stock, image, delete, WhatsApp number   <- backend calls, unchanged logic
+             (b) reviews  (c) hero banner  (d) sale banner  (e) layout helpers  (f) layout organizer
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ziorpure Admin</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  padding:20px;
+  font-family:Arial,sans-serif;
+  background:#f6f5f2;
+  color:#292929
+}
+main{max-width:1000px;margin:auto}
+h1{margin-top:0}
+.box{
+  background:#fff;
+  padding:20px;
+  border-radius:14px;
+  margin-bottom:20px;
+  box-shadow:0 3px 15px #00000008
+}
+input,textarea,button{
+  font:inherit;
+  padding:11px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  max-width:100%
+}
+input,textarea{width:100%;margin:5px 0 12px}
+button{cursor:pointer;border:0;background:#292929;color:white}
+button:disabled{opacity:.5;cursor:wait}
+.ghost{background:#eee;color:#222}
+.del{background:#b42318;color:white}
+form .primary{width:100%}
+.item{
+  display:grid;
+  grid-template-columns:90px minmax(0,1fr);
+  gap:14px;
+  border-bottom:1px solid #eee;
+  padding:16px 0
+}
+.item:last-child{border-bottom:0}
+.item img{
+  width:90px;height:90px;
+  object-fit:cover;border-radius:9px;
+  background:#f0f0f0
+}
+.item strong{overflow-wrap:anywhere}
+.pr{
+  display:flex;gap:8px;align-items:center;
+  flex-wrap:wrap;margin-top:9px
+}
+.pr input[type=number]{width:110px;margin:0}
+.pr input[type=file]{flex:1;min-width:150px;margin:0}
+.pr button{white-space:nowrap}
+.acts{
+  grid-column:1/-1;
+  display:flex;gap:8px;flex-wrap:wrap
+}
+.acts button{flex:1}
+#msg{white-space:pre-wrap;margin:12px 0;color:#345}
+.muted{font-size:13px;color:#666}
+.hidden{display:none!important}
+@media(min-width:650px){
+  .item{grid-template-columns:100px minmax(0,1fr) auto}
+  .item img{width:100px;height:100px}
+  .acts{grid-column:auto;flex-direction:column;min-width:100px}
+}
+
+/* reviews manager (added) */
+.rv-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+.rv-tabs button{background:#eee;color:#222}.rv-tabs button.on{background:#292929;color:#fff}
+.rv-badge{display:inline-block;min-width:22px;padding:2px 8px;margin-left:6px;border-radius:99px;background:#b42318;color:#fff;font-size:12px;text-align:center;vertical-align:middle}
+.rv-badge.zero{background:#cfcfcf;color:#444}
+.rv{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;border-bottom:1px solid #eee;padding:16px 0}
+.rv:last-child{border-bottom:0}
+.rv .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rv .stars{color:#d49a00;letter-spacing:2px}
+.rv p{margin:8px 0 6px;overflow-wrap:anywhere;white-space:pre-wrap}
+.rv .pill{font-size:12px;padding:3px 9px;border-radius:99px;background:#fff3cd;color:#7a5a00}
+.rv .pill.ok{background:#d9f2e1;color:#14572b}
+.rv .acts{grid-column:auto;flex-direction:row}
+.rv .acts button{flex:0 0 auto;min-width:96px}
+.ok-btn{background:#14793a;color:#fff}
+@media(min-width:650px){.rv{grid-template-columns:minmax(0,1fr) auto}.rv .acts{flex-direction:column;min-width:110px}}
+
+/* ================= v2: organized + mobile-friendly admin ================= */
+:root{--line:#e7e4de}
+body{padding:0 0 96px;background:#f4f2ee;-webkit-text-size-adjust:100%}
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.topbar h1{margin:0;font-size:18px}
+.topbar button[hidden]{display:none}
+main{padding:14px 12px 0;max-width:900px}
+.box{padding:16px;border-radius:16px;margin-bottom:16px;border:1px solid var(--line);box-shadow:none}
+.box h2{margin:0 0 6px;font-size:19px}
+input,textarea,button,select{font-size:16px}
+input,textarea{min-height:46px;border-color:#d8d4cc;background:#fff}
+label{display:block;font-size:13px;font-weight:600;color:#444;margin-top:4px}
+button{min-height:46px;padding:10px 16px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:active:not(:disabled){transform:scale(.98)}
+.pane[hidden]{display:none}
+/* tab bar: bottom on phones, top row on desktop */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;background:#fff;border-top:1px solid var(--line);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 20px -14px #0006}
+.tabbar button{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:54px;padding:6px 2px;background:transparent;color:#6b6b6b;border-radius:12px;font-size:10.5px;font-weight:600}
+.tabbar svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button.on{color:#fff;background:#292929}
+.tabbar .tb{position:absolute;top:2px;right:calc(50% - 26px);min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:#b42318;color:#fff;font-size:11px;line-height:18px;text-align:center}
+.tabbar .tb[hidden]{display:none}
+@media(min-width:900px){body{padding-bottom:30px}.tabbar{position:static;max-width:900px;margin:0 auto 14px;gap:6px;border:1px solid var(--line);border-radius:16px;box-shadow:none;padding:6px}.tabbar button{flex-direction:row;gap:8px;font-size:13px;min-height:46px}.tabbar .tb{position:static}}
+/* save message = floating toast, always visible */
+#msg{margin:0}
+#msg:not(:empty){position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:60;background:#292929;color:#fff;padding:13px 16px;border-radius:14px;font-size:14px;box-shadow:0 14px 34px -12px #000a;max-width:560px;margin:0 auto}
+@media(min-width:900px){#msg:not(:empty){bottom:24px}}
+/* product cards */
+#prodSearch{margin:10px 0 14px}
+.item{display:block;padding:0;border:1px solid var(--line);border-radius:14px;margin-bottom:12px;background:#fff;overflow:hidden}
+.item:last-child{border-bottom:1px solid var(--line)}
+.item[hidden]{display:none}
+.item-head{display:flex;align-items:center;gap:12px;width:100%;min-height:86px;padding:12px;background:#fff;color:inherit;text-align:left;border-radius:0;border:0}
+.item-head img{width:64px;height:64px;flex:none;border-radius:10px;object-fit:cover;background:#f0f0f0}
+.ih-main{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
+.ih-main strong{font-size:15px;line-height:1.25}
+.ih-sub{font-size:13px;color:#555}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:#eee;color:#444}
+.chip.ok{background:#d9f2e1;color:#14572b}.chip.warn{background:#fff3cd;color:#7a5a00}.chip.bad{background:#fde2e0;color:#b42318}.chip.off{background:#e5e5e5;color:#555}.chip.sale{background:#e0ecff;color:#0b3fae}
+.chev{font-size:26px;color:#888;transition:transform .2s;flex:none}
+.item.open .chev{transform:rotate(90deg)}
+.item.open .item-head{border-bottom:1px solid var(--line)}
+.item-body{padding:2px 14px 16px;background:#fcfbf9}
+.item-body[hidden]{display:none}
+.grp{padding:14px 0;border-bottom:1px solid var(--line)}
+.grp h4{margin:0 0 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#777}
+.grp input,.grp textarea{margin:5px 0 10px}
+.grp .row input{margin:0}
+.row{display:flex;gap:8px;align-items:stretch}
+.row input{flex:1;min-width:0}
+.step{flex:none;width:48px;padding:0;background:#eee;color:#222;font-size:24px}
+.save{background:#292929;color:#fff;white-space:nowrap}
+.grp>.save{width:100%;margin-top:2px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:380px){.two{grid-template-columns:1fr}}
+.item .acts{grid-column:auto;flex-direction:row;min-width:0;display:grid;grid-template-columns:1fr;gap:8px;padding-top:14px}
+.item .acts button{flex:none;width:100%}
+@media(min-width:600px){.item .acts{grid-template-columns:repeat(3,1fr)}}
+/* hero + sale + reviews on phones */
+.rv-tabs button{min-height:42px;flex:1}
+.rv .acts{display:flex;gap:8px}.rv .acts button{flex:1;min-width:0}
+@media(min-width:650px){.rv .acts{flex-direction:column}}
+#heroPreview img,#heroPreview video{max-width:100%;height:auto;max-height:170px}
+#loginBox{margin-top:18px}
+
+/* ================= v3: clear sequence for phone + computer ================= */
+.tb-left{display:flex;align-items:baseline;gap:10px;min-width:0}
+#crumb{font-size:13px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#crumb:not(:empty)::before{content:'/ '}
+.navgrp{display:none}
+.pane-sub{margin:0 0 14px;color:#666;font-size:13.5px;line-height:1.5}
+.opt{font-style:normal;font-weight:500;color:#888}
+.no{display:inline-grid;place-items:center;width:22px;height:22px;margin-right:8px;border-radius:50%;background:#292929;color:#fff;font-size:12px;font-weight:700;flex:none}
+/* stat cards = filters */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 14px}
+.stat{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:62px;padding:10px 12px;background:#f6f4f0;color:#222;border:1px solid var(--line);border-radius:12px;text-align:left}
+.stat b{font-size:22px;line-height:1.1}
+.stat span{font-size:11.5px;color:#666;font-weight:600}
+.stat.on{background:#292929;border-color:#292929;color:#fff}.stat.on span{color:#d6d6d6}
+.stat.go b{color:#b42318}.stat.go.has{border-color:#b42318}
+/* collapsible numbered parts */
+.acc{border:1px solid var(--line);border-radius:14px;margin:0 0 12px;background:#fff;overflow:hidden}
+.acc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;min-height:54px;padding:12px 14px;font-weight:700;font-size:15px}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary::after{content:'›';margin-left:auto;font-size:24px;color:#888;transition:transform .2s}
+.acc[open]>summary::after{transform:rotate(90deg)}
+.acc[open]>summary{border-bottom:1px solid var(--line)}
+.acc-body{padding:6px 14px 16px;background:#fcfbf9}
+.acc-body .pr{margin-top:6px}
+#addForm .grp{background:#fcfbf9;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+#addForm .grp h4{display:flex;align-items:center}
+#addForm .primary{width:100%}
+@media(min-width:560px){.stats{grid-template-columns:repeat(6,1fr)}.stat{min-height:70px}}
+/* computer: sidebar + roomy content */
+@media(min-width:1000px){
+  body.is-admin{padding:0 0 30px 250px}
+  body.is-admin .topbar{padding:12px 28px}
+  body.is-admin main{max-width:1120px;margin:0;padding:22px 28px 0}
+  body.is-admin #tabbar{position:fixed;left:0;top:0;bottom:0;width:250px;max-width:none;margin:0;flex-direction:column;justify-content:flex-start;gap:2px;padding:20px 14px;border:0;border-right:1px solid var(--line);border-radius:0;box-shadow:none;background:#fff;z-index:45;overflow-y:auto}
+  body.is-admin #tabbar::before{content:'ZIORPURE';display:block;margin:2px 12px 14px;font-weight:800;letter-spacing:.28em;font-size:15px;color:#292929}
+  body.is-admin #tabbar button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;min-height:46px;padding:10px 14px;font-size:14px;border-radius:12px}
+  body.is-admin #tabbar svg{width:20px;height:20px}
+  body.is-admin #tabbar .tb{position:static;margin-left:auto}
+  body.is-admin .navgrp{display:block;margin:16px 14px 4px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9a9a9a}
+  body.is-admin #list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+  body.is-admin #list>.item{margin:0}
+  body.is-admin #addForm{max-width:760px}
+  body.is-admin #addForm .two{grid-template-columns:1fr 1fr}
+  body.is-admin .acc-body{padding:8px 18px 18px}
+  body.is-admin #msg:not(:empty){left:auto;right:24px;bottom:24px;max-width:420px}
+  .stat{min-height:76px}
+}
+@media(min-width:1000px) and (max-width:1250px){body.is-admin #list{grid-template-columns:1fr}}
+@media(max-width:999px){.tb-left h1{font-size:17px}}
+</style>
+</head>
+
+<body>
+<header class="topbar">
+  <div class="tb-left"><h1>Ziorpure Admin</h1><span id="crumb"></span></div>
+  <button class="ghost" id="logout" type="button" hidden>Logout</button>
+</header>
+<main>
+
+  <div class="box" id="loginBox">
+    <h2>Admin Login</h2>
+    <form id="loginForm">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" required>
+
+      <label for="password">Password</label>
+      <input id="password" type="password"
+        autocomplete="current-password" required>
+
+      <button class="primary" id="loginBtn" type="submit">Login</button>
+    </form>
+  </div>
+
+  <div id="adminArea" class="hidden">
+    <nav id="tabbar" class="tabbar" aria-label="Admin sections">
+      <span class="navgrp">Store</span><button type="button" data-tab="products" class="on"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg><span>Products</span></button>
+      <button type="button" data-tab="add"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Add product</span></button>
+      <span class="navgrp">Customers</span><button type="button" data-tab="reviews"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Reviews</span><b class="tb" id="tabRvBadge" hidden>0</b></button>
+      <span class="navgrp">Website</span><button type="button" data-tab="home"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>Home page</span></button>
+      <span class="navgrp">Account</span><button type="button" data-tab="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Settings</span></button>
+    </nav>
+
+    <section class="pane" data-pane="products">
+    <div class="box">
+      <div class="pr" style="justify-content:space-between">
+        <h2>Your products</h2>
+        <button class="ghost" id="refresh" type="button">Refresh</button>
+      </div>
+      <p class="pane-sub">Apne saare products yahan. Neeche ke cards par tap karke list filter karo.</p>
+      <div class="stats" id="stats">
+        <button type="button" class="stat on" data-filter="all"><b id="stTotal">0</b><span>All products</span></button>
+        <button type="button" class="stat" data-filter="low"><b id="stLow">0</b><span>Low stock</span></button>
+        <button type="button" class="stat" data-filter="sold"><b id="stSold">0</b><span>Sold out</span></button>
+        <button type="button" class="stat" data-filter="hidden"><b id="stHidden">0</b><span>Hidden</span></button>
+        <button type="button" class="stat" data-filter="sale"><b id="stSale">0</b><span>On sale</span></button>
+        <button type="button" class="stat go" data-go="reviews"><b id="stPending">0</b><span>Reviews waiting</span></button>
+      </div>
+      <input id="prodSearch" type="search" placeholder="Search product by name..." autocomplete="off">
+      <div id="list">Loading products...</div>
+      <p id="zaEmpty" class="muted" hidden>Is filter mein koi product nahi mila.</p>
+    </div>
+  
+    </section>
+
+    <section class="pane" data-pane="add" hidden>
+    <div class="box">
+      <h2>Add new product</h2>
+      <p class="pane-sub">3 chhote steps: details, price, phir stock aur image.</p>
+      <form id="addForm">
+        <section class="grp">
+          <h4><b class="no">1</b> Basic info</h4>
+          <label for="n">Product name</label>
+          <input id="n" required placeholder="Product name">
+          <label for="d">Description</label>
+          <textarea id="d" rows="3" placeholder="Product description"></textarea>
+        </section>
+
+        <section class="grp">
+          <h4><b class="no">2</b> Price &amp; sale</h4>
+          <div class="two">
+            <div>
+              <label for="p">Price (Rs.)</label>
+              <input id="p" type="number" min="0" step="any" inputmode="decimal" required placeholder="Product price">
+            </div>
+            <div>
+              <label for="cp">Original price</label>
+              <input id="cp" type="number" min="0" step="any" inputmode="decimal" placeholder="sale ho to hi likho">
+            </div>
+          </div>
+          <label for="tg">Label <i class="opt">(optional, jaise Smooth &amp; Shine)</i></label>
+          <input id="tg" maxlength="30" placeholder="Product ke upar chhota label">
+        </section>
+
+        <section class="grp">
+          <h4><b class="no">3</b> Stock &amp; image</h4>
+          <label for="st">Stock quantity</label>
+          <input id="st" type="number" min="0" step="1" inputmode="numeric" value="10" required placeholder="Kitna stock hai?">
+          <label for="f">Product image</label>
+          <input id="f" type="file" accept="image/*">
+        </section>
+
+        <button class="primary" id="add" type="submit">Add product</button>
+      </form>
+    </div>
+
+    
+    </section>
+
+    <section class="pane" data-pane="reviews" hidden>
+    <div class="box" id="reviewsBox">
+      <div class="pr" style="justify-content:space-between">
+        <h2>Customer reviews <span class="rv-badge zero" id="rvPending">0</span></h2>
+        <button class="ghost" id="rvRefresh" type="button">Refresh</button>
+      </div>
+      <p class="pane-sub">Naye reviews pehle "Pending" mein aate hain. Approve karne par hi website par dikhte hain.</p>
+      <div class="rv-tabs" id="rvTabs">
+        <button type="button" data-f="pending" class="on">Pending</button>
+        <button type="button" data-f="approved">Approved</button>
+        <button type="button" data-f="all">All</button>
+      </div>
+      <div id="rvList">Loading reviews...</div>
+    </div>
+
+    
+    </section>
+
+    <section class="pane" data-pane="home" hidden>
+    <div class="box" id="heroBox">
+      <p class="pane-sub">Website ke sab se upar wala hissa, step by step.</p>
+      <details class="acc" open>
+        <summary><b class="no">1</b><span>Banner picture / video</span></summary>
+        <div class="acc-body">
+          <p class="muted">Video ya image upload karo. Video ki pehli frame se poster apne aap ban jata hai.</p>
+          <div id="heroPreview" class="muted" style="margin-bottom:10px">Loading...</div>
+          <label for="heroFile">Banner video (MP4) ya image</label>
+          <input id="heroFile" type="file" accept="video/mp4,video/*,image/*">
+          <div class="pr" style="margin-bottom:6px">
+            <button id="heroUpload" type="button">Upload &amp; use</button>
+            <button class="ghost" id="heroReset" type="button">Reset to default</button>
+          </div>
+        </div>
+      </details>
+      <details class="acc">
+        <summary><b class="no">2</b><span>Banner text</span></summary>
+        <div class="acc-body">
+          <label for="heroEyebrow">Chhoti line (jaise: Our new)</label>
+          <input id="heroEyebrow" maxlength="40" placeholder="Our new">
+          <label for="heroTitle1">Heading line 1 (jaise: Hair Care)</label>
+          <input id="heroTitle1" maxlength="40" placeholder="Hair Care">
+          <label for="heroTitle2">Heading line 2 (jaise: Collection)</label>
+          <input id="heroTitle2" maxlength="40" placeholder="Collection">
+          <label for="heroText">Neeche ka text</label>
+          <textarea id="heroText" rows="3" maxlength="300" placeholder="Banner ka chhota description"></textarea>
+          <button id="heroSaveText" type="button">Save banner text</button>
+          <p class="muted" style="margin-bottom:0">Text khali chhodo to website ka purana text hi dikhega.</p>
+        </div>
+      </details>
+    </div>
+
+    
+
+    <div class="box" id="saleBox">
+      <details class="acc" open>
+        <summary><b class="no">3</b><span>Sale banner (hero ke neeche chalti patti)</span></summary>
+        <div class="acc-body">
+          <p class="muted">Jis product par sale ho, uski "Original price" products mein bhar do, wo apne aap patti mein aa jayega. Apni offers bhi likh sakte ho.</p>
+          <label class="muted" style="display:flex;gap:10px;align-items:center;margin:8px 0 14px">
+            <input type="checkbox" id="saleOn" style="width:auto;margin:0">
+            Website par sale banner dikhao
+          </label>
+          <label for="saleItems">Extra offers (ek line = ek offer)</label>
+          <textarea id="saleItems" rows="4" maxlength="800" placeholder="Free delivery on 3 products&#10;Buy 2 Get 10% OFF"></textarea>
+          <button id="saleSave" type="button">Save sale banner</button>
+        </div>
+      </details>
+    </div>
+
+    
+    </section>
+
+    <section class="pane" data-pane="settings" hidden>
+    <div class="box">
+  <h2>WhatsApp Settings</h2>
+  <p class="pane-sub">Customer ke orders isi number par aate hain.</p>
+  <label for="whatsappNumber">WhatsApp number</label>
+  <input
+    id="whatsappNumber"
+    type="tel"
+    inputmode="numeric"
+    placeholder="923001234567"
+    autocomplete="tel"
+  >
+  <p class="muted">
+    Country code ke saath number likho, + ya spaces ke baghair.
+  </p>
+  <button id="saveWhatsApp" type="button">Save Number</button>
+</div>
+    
+    
+    </section>
+  </div>
+
+  <div id="msg" role="status" aria-live="polite"></div>
+</main>
+
+<script>
+const URL_ = 'https://ipemgdvwjitffgfmhpem.supabase.co';
+const KEY = 'sb_publishable_Ijbjb8JWo7uE1Jzza8hDFQ_zzmY4lwl';
+const BUCKET = 'product-images';
+
+let token = sessionStorage.getItem('zior_admin_token') || '';
+
+const $ = id => document.getElementById(id);
+
+function say(message) {
+  $('msg').textContent = message || '';
+}
+
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  })[char]);
+}
+
+async function api(path, options = {}) {
+  const headers = {
+    apikey: KEY,
+    Authorization: 'Bearer ' + token,
+    ...(options.body ? {'Content-Type':'application/json'} : {}),
+    ...(options.headers || {})
+  };
+
+  const response = await fetch(URL_ + path, {
+    ...options,
+    headers,
+    cache: 'no-store'
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || 'Request failed: ' + response.status);
+  }
+
+  if (response.status === 204) return null;
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
+}
+
+function show() {
+  $('loginBox').classList.toggle('hidden', !!token);
+  $('adminArea').classList.toggle('hidden', !token);
+}
+
+async function loadWhatsAppNumber() {
+  try {
+    const rows = await api(
+      '/rest/v1/site_settings?id=eq.1&select=whatsapp_number'
+    );
+
+    $('whatsappNumber').value =
+      rows.length ? rows[0].whatsapp_number : '923138681319';
+  } catch (error) {
+    say('WhatsApp number load nahi hua: ' + error.message);
+  }
+}
+
+$('saveWhatsApp').onclick = async () => {
+  const number = $('whatsappNumber').value.replace(/\D/g, '');
+
+  if (!/^92\d{10}$/.test(number)) {
+    say('Valid Pakistani WhatsApp number likho, jaise 923138681319.');
+    return;
+  }
+
+  $('saveWhatsApp').disabled = true;
+  say('Saving WhatsApp number...');
+
+  try {
+    await api('/rest/v1/site_settings?id=eq.1', {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ whatsapp_number: number })
+    });
+
+    say('WhatsApp number successfully saved!');
+    $('whatsappNumber').value = number;
+  } catch (error) {
+    say('Save nahi hua: ' + error.message);
+  } finally {
+    $('saveWhatsApp').disabled = false;
+  }
+};
+  
+async function uploadImage(file) {
+  if (!file) return null;
+
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Please select an image file.');
+  }
+
+  const safeName = file.name
+    .replace(/[^a-z0-9.]+/gi, '-')
+    .toLowerCase();
+
+  const path = Date.now() + '-' +
+    Math.random().toString(36).slice(2, 8) + '-' + safeName;
+
+  const response = await fetch(
+    `${URL_}/storage/v1/object/${BUCKET}/${path}`,
+    {
+      method: 'POST',
+      headers: {
+        apikey: KEY,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': file.type || 'application/octet-stream'
+      },
+      body: file
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Image upload failed: ' + await response.text());
+  }
+
+  return `${URL_}/storage/v1/object/public/${BUCKET}/${path}`;
+}
+
+const OPEN = new Set();
+
+async function load() {
+  $('list').textContent = 'Loading products...';
+
+  try {
+    const rows = await api(
+      '/rest/v1/products?select=*&order=created_at.desc'
+    );
+
+    if (!rows.length) {
+      $('list').textContent = 'No products yet.';
+      return;
+    }
+
+    $('list').innerHTML = rows.map(p => {
+      const id = esc(p.id);
+      const stock = Number(p.stock || 0);
+      const isOpen = OPEN.has(String(p.id));
+      const onSale = Number(p.compare_price) > Number(p.price);
+      return `
+      <div class="item${isOpen ? ' open' : ''}" data-name="${esc(String(p.name).toLowerCase())}">
+        <button class="item-head" type="button" data-toggle-item="${id}" aria-expanded="${isOpen}">
+          <img src="${esc(p.image_url || '')}" alt="" loading="lazy">
+          <span class="ih-main">
+            <strong>${esc(p.name)}</strong>
+            <span class="ih-sub">Rs. ${esc(p.price ?? 0)}${onSale ? ' <s>Rs. ' + esc(p.compare_price) + '</s>' : ''}</span>
+            <span class="chips">
+              <span class="chip ${stock <= 0 ? 'bad' : stock <= 3 ? 'warn' : 'ok'}">${stock <= 0 ? 'Sold out' : 'Stock ' + stock}</span>
+              <span class="chip ${p.active ? 'ok' : 'off'}">${p.active ? 'Visible' : 'Hidden'}</span>
+              ${onSale ? '<span class="chip sale">Sale</span>' : ''}
+            </span>
+          </span>
+          <span class="chev" aria-hidden="true">›</span>
+        </button>
+
+        <div class="item-body"${isOpen ? '' : ' hidden'}>
+          <section class="grp">
+            <h4>Name &amp; details</h4>
+            <label for="nm${id}">Name</label>
+            <input id="nm${id}" type="text" maxlength="80" value="${esc(p.name)}">
+            <label for="ds${id}">Description</label>
+            <textarea id="ds${id}" rows="3">${esc(p.description || '')}</textarea>
+            <div class="two">
+              <div>
+                <label for="cp${id}">Original price (Sale)</label>
+                <input id="cp${id}" type="number" min="0" step="any" inputmode="decimal"
+                  value="${p.compare_price ? Number(p.compare_price) : ''}" placeholder="khali = no sale">
+              </div>
+              <div>
+                <label for="tg${id}">Label</label>
+                <input id="tg${id}" type="text" maxlength="30"
+                  value="${esc(p.tag || '')}" placeholder="Smooth &amp; Shine">
+              </div>
+            </div>
+            <button class="save" data-savedetails="${id}" type="button">Save details</button>
+          </section>
+
+          <section class="grp">
+            <h4>Price (Rs.)</h4>
+            <div class="row">
+              <input type="number" min="0" step="any" inputmode="decimal"
+                id="pr${id}" value="${esc(p.price ?? 0)}" aria-label="Price (Rs.)">
+              <button class="save" data-save="${id}" type="button">Save price</button>
+            </div>
+          </section>
+
+          <section class="grp">
+            <h4>Stock</h4>
+            <div class="row">
+              <button class="step" data-stdec="${id}" type="button" aria-label="Decrease stock">−</button>
+              <input type="number" min="0" step="1" inputmode="numeric"
+                id="st${id}" value="${stock}" aria-label="Stock">
+              <button class="step" data-stinc="${id}" type="button" aria-label="Increase stock">+</button>
+              <button class="save" data-setstock="${id}" type="button">Save stock</button>
+            </div>
+          </section>
+
+          <section class="grp">
+            <h4>Image</h4>
+            <input type="file" accept="image/*" id="img${id}"
+              aria-label="Choose new image for ${esc(p.name)}">
+            <button class="save" data-image="${id}" type="button">Replace image</button>
+          </section>
+
+          <div class="acts">
+            <button class="ghost" data-stock="${id}" type="button">
+              ${stock > 0 ? 'Mark sold out' : 'Restock (10)'}
+            </button>
+            <button class="ghost" data-active="${id}" type="button">
+              ${p.active ? 'Hide from site' : 'Show on site'}
+            </button>
+            <button class="del" data-delete="${id}" type="button">Delete</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    $('list').querySelectorAll('[data-toggle-item]').forEach(head => {
+      head.onclick = () => {
+        const item = head.closest('.item');
+        const body = item.querySelector('.item-body');
+        const id = head.dataset.toggleItem;
+        const open = body.hidden;
+        body.hidden = !open;
+        item.classList.toggle('open', open);
+        head.setAttribute('aria-expanded', String(open));
+        if (open) OPEN.add(id); else OPEN.delete(id);
+      };
+    });
+
+    $('list').querySelectorAll('[data-save]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.save;
+        const value = $('pr' + id).value;
+        const price = Number(value);
+
+        if (value.trim() === '' || !Number.isFinite(price) || price < 0) {
+          say('Enter a valid price.');
+          return;
+        }
+
+        button.disabled = true;
+        say('Saving price...');
+
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({price})
+          });
+
+          say('Price updated successfully.');
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+    $('list').querySelectorAll('[data-image]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.image;
+        const file = $('img' + id).files[0];
+
+        if (!file) {
+          say('Pehle product ki new image select karo.');
+          return;
+        }
+
+        button.disabled = true;
+        say('Uploading new image...');
+
+        try {
+          const image_url = await uploadImage(file);
+
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({image_url})
+          });
+
+          say('Image replace ho gayi! Product update ho gaya.');
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+    $('list').querySelectorAll('[data-stock]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.stock;
+        const product = rows.find(p => String(p.id) === String(id));
+        if (!product) return;
+
+        const stock = Number(product.stock || 0) > 0 ? 0 : 10;
+
+        button.disabled = true;
+        say('Updating stock...');
+
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({stock})
+          });
+
+          say(stock === 0 ? 'Product marked sold out.' : 'Product restocked.');
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+    $('list').querySelectorAll('[data-savedetails]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.savedetails;
+        const name = $('nm' + id).value.trim();
+        const description = $('ds' + id).value.trim();
+
+        if (!name) {
+          say('Product ka naam khali nahi ho sakta.');
+          return;
+        }
+
+        button.disabled = true;
+        say('Saving name & description...');
+
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({name, description})
+          });
+
+          const cpRaw = $('cp' + id).value.trim();
+          const tagRaw = $('tg' + id).value.trim();
+          const priceNow = Number($('pr' + id).value);
+
+          if (cpRaw !== '' && !(Number(cpRaw) > priceNow)) {
+            say('Naam save ho gaya, lekin Original price, product ki price se zyada honi chahiye.');
+            button.disabled = false;
+            return;
+          }
+
+          try {
+            await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+              method: 'PATCH',
+              headers: {'Prefer':'return=minimal'},
+              body: JSON.stringify({
+                compare_price: cpRaw === '' ? null : Number(cpRaw),
+                tag: tagRaw || null
+              })
+            });
+            say('Sab save ho gaya. Website par refresh karne par badal jayega.');
+          } catch (extraError) {
+            say('Naam save ho gaya, lekin Sale price / label save nahi hue. Pehle supabase_setup.sql run karo.');
+          }
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+    $('list').querySelectorAll('[data-stdec],[data-stinc]').forEach(button => {
+      button.onclick = () => {
+        const id = button.dataset.stdec || button.dataset.stinc;
+        const input = $('st' + id);
+        const now = Math.max(0, Math.floor(Number(input.value) || 0));
+        input.value = button.dataset.stinc ? now + 1 : Math.max(0, now - 1);
+      };
+    });
+
+    $('list').querySelectorAll('[data-setstock]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.setstock;
+        const raw = $('st' + id).value;
+        const stock = Number(raw);
+
+        if (raw.trim() === '' || !Number.isInteger(stock) || stock < 0) {
+          say('Stock 0 ya us se zyada poora number hona chahiye.');
+          return;
+        }
+
+        button.disabled = true;
+        say('Saving stock...');
+
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({stock})
+          });
+
+          say(stock === 0
+            ? 'Stock 0 save ho gaya. Product website par Sold out dikhega.'
+            : 'Stock save ho gaya: ' + stock);
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+    $('list').querySelectorAll('[data-active]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.active;
+        const product = rows.find(p => String(p.id) === String(id));
+        if (!product) return;
+
+        button.disabled = true;
+        say('Updating visibility...');
+
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'Prefer':'return=minimal'},
+            body: JSON.stringify({active:!product.active})
+          });
+
+          say('Product visibility updated.');
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+    $('list').querySelectorAll('[data-delete]').forEach(button => {
+      button.onclick = async () => {
+        const id = button.dataset.delete;
+        const product = rows.find(p => String(p.id) === String(id));
+        if (!product) return;
+
+        if (!confirm(`Delete "${product.name}"? This cannot be undone.`)) {
+          return;
+        }
+
+        button.disabled = true;
+        say('Deleting product...');
+
+        try {
+          await api('/rest/v1/products?id=eq.' + encodeURIComponent(id), {
+            method: 'DELETE',
+            headers: {'Prefer':'return=minimal'}
+          });
+
+          say('Product deleted.');
+          await load();
+        } catch (error) {
+          say(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+
+  } catch (error) {
+    $('list').textContent = 'Could not load products.';
+    say(error.message);
+  }
+}
+
+$('loginForm').addEventListener('submit', async event => {
+  event.preventDefault();
+
+  const email = $('email').value.trim();
+  const password = $('password').value;
+
+  $('loginBtn').disabled = true;
+  say('Logging in...');
+
+  try {
+    const response = await fetch(
+      `${URL_}/auth/v1/token?grant_type=password`,
+      {
+        method:'POST',
+        headers:{
+          apikey:KEY,
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({email,password})
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.msg || data.message || data.error_description ||
+        'Login failed. Check your email and password.');
+    }
+
+    if (!data.access_token) {
+      throw new Error('Login token was not returned.');
+    }
+
+    token = data.access_token;
+    sessionStorage.setItem('zior_admin_token', token);
+
+    show();
+    await load();
+await loadWhatsAppNumber();
+say('Logged in successfully.');
+
+  } catch (error) {
+    token = '';
+    sessionStorage.removeItem('zior_admin_token');
+    show();
+    say(error.message);
+  } finally {
+    $('loginBtn').disabled = false;
+  }
+});
+
+$('logout').onclick = () => {
+  token = '';
+  sessionStorage.removeItem('zior_admin_token');
+  show();
+  say('Logged out.');
+};
+
+$('refresh').onclick = load;
+
+$('addForm').addEventListener('submit', async event => {
+  event.preventDefault();
+
+  const name = $('n').value.trim();
+  const description = $('d').value.trim();
+  const priceValue = $('p').value;
+  const price = Number(priceValue);
+  const file = $('f').files[0];
+
+  if (!name) {
+    say('Product name is required.');
+    return;
+  }
+
+  if (priceValue.trim() === '' || !Number.isFinite(price) || price < 0) {
+    say('Enter a valid price.');
+    return;
+  }
+
+  const stockValue = $('st').value;
+  const stock = Number(stockValue);
+
+  if (stockValue.trim() === '' || !Number.isInteger(stock) || stock < 0) {
+    say('Stock 0 ya us se zyada poora number hona chahiye.');
+    return;
+  }
+
+  const extraFields = {};
+  const cpValue = $('cp').value.trim();
+  const tagValue = $('tg').value.trim();
+
+  if (cpValue !== '') {
+    const compare = Number(cpValue);
+    if (!Number.isFinite(compare) || compare <= price) {
+      say('Original price, product ki price se zyada honi chahiye (tabhi Sale dikhega).');
+      return;
+    }
+    extraFields.compare_price = compare;
+  }
+
+  if (tagValue) extraFields.tag = tagValue;
+
+  $('add').disabled = true;
+  say('Adding product...');
+
+  try {
+    let image_url = null;
+
+    if (file) {
+      image_url = await uploadImage(file);
+    }
+
+    await api('/rest/v1/products', {
+      method:'POST',
+      headers:{'Prefer':'return=minimal'},
+      body:JSON.stringify({
+        name,
+        description,
+        price,
+        image_url,
+        stock,
+        active:true,
+        ...extraFields
+      })
+    });
+
+    $('addForm').reset();
+    say('Product added successfully!');
+    await load();
+
+  } catch (error) {
+    say(error.message);
+  } finally {
+    $('add').disabled = false;
+  }
+});
+
+show();
+
+if (token) {
+  load();
+  loadWhatsAppNumber();
+}
+</script>
+<script>
+/* ---- reviews manager (added; uses the same api(), say(), esc(), token as above) ---- */
+(()=>{
+let rows=[],filter='pending',loaded=false;
+const list=document.getElementById('rvList');
+function stars(n){n=Math.max(0,Math.min(5,Number(n)||0));return '★'.repeat(n)+'☆'.repeat(5-n)}
+function when(d){try{return new Date(d).toLocaleString()}catch(e){return ''}}
+function paintTabs(){document.querySelectorAll('#rvTabs button').forEach(b=>b.classList.toggle('on',b.dataset.f===filter))}
+function paint(){
+  const pending=rows.filter(r=>!r.approved).length;
+  const bd=document.getElementById('rvPending');bd.textContent=pending;bd.classList.toggle('zero',!pending);
+  const view=rows.filter(r=>filter==='all'||(filter==='pending'?!r.approved:r.approved));
+  if(!view.length){list.textContent=filter==='pending'?'Koi pending review nahi hai.':filter==='approved'?'Abhi koi approved review nahi hai.':'Abhi koi review nahi aaya.';return}
+  list.innerHTML=view.map(r=>`
+    <div class="rv">
+      <div>
+        <div class="top">
+          <strong>${esc(r.name)}</strong>
+          <span class="muted">· ${esc(r.product)}</span>
+          <span class="stars" aria-label="${esc(r.rating)} out of 5">${stars(r.rating)}</span>
+          <span class="pill ${r.approved?'ok':''}">${r.approved?'Approved':'Pending'}</span>
+        </div>
+        <p>${esc(r.message)}</p>
+        <div class="muted">${esc(when(r.created_at))}</div>
+      </div>
+      <div class="acts">
+        <button class="${r.approved?'ghost':'ok-btn'}" data-toggle="${esc(r.id)}" type="button">${r.approved?'Unapprove':'Approve'}</button>
+        <button class="del" data-del="${esc(r.id)}" type="button">Delete</button>
+      </div>
+    </div>`).join('');
+  list.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=async()=>{
+    const r=rows.find(x=>String(x.id)===b.dataset.toggle);if(!r)return;
+    b.disabled=true;say(r.approved?'Review hide ho raha hai...':'Review approve ho raha hai...');
+    try{
+      await api('/rest/v1/reviews?id=eq.'+encodeURIComponent(r.id),{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({approved:!r.approved})});
+      say(r.approved?'Review website se hata diya gaya.':'Review approve ho gaya. Ab website par dikhega.');
+      await loadReviews();
+    }catch(e){say(e.message);b.disabled=false}
+  });
+  list.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
+    const r=rows.find(x=>String(x.id)===b.dataset.del);if(!r)return;
+    if(!confirm(`${r.name} ka review delete karna hai? Ye wapas nahi aayega.`))return;
+    b.disabled=true;say('Review delete ho raha hai...');
+    try{
+      await api('/rest/v1/reviews?id=eq.'+encodeURIComponent(r.id),{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+      say('Review delete ho gaya.');await loadReviews();
+    }catch(e){say(e.message);b.disabled=false}
+  });
+}
+async function loadReviews(){
+  if(!token)return;
+  list.textContent='Loading reviews...';
+  try{
+    rows=await api('/rest/v1/reviews?select=*&order=created_at.desc&limit=300')||[];
+    loaded=true;paintTabs();paint();
+  }catch(e){
+    const m=String(e.message||'');
+    list.textContent=/relation|does not exist|PGRST205|404/i.test(m)
+      ?'Reviews table nahi mili. Pehle supabase_reviews.sql ko Supabase SQL Editor mein run karo.'
+      :'Reviews load nahi hue: '+m;
+  }
+}
+document.getElementById('rvTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-f]');if(!b)return;filter=b.dataset.f;paintTabs();if(loaded)paint()});
+document.getElementById('rvRefresh').onclick=loadReviews;
+/* load when the admin area becomes visible (after login, or on page reload with a saved token) */
+const area=document.getElementById('adminArea');
+new MutationObserver(()=>{if(!area.classList.contains('hidden'))loadReviews()}).observe(area,{attributes:true,attributeFilter:['class']});
+if(token)loadReviews();
+})();
+</script>
+<script>
+/* ---- hero banner manager (added; uses api(), say(), esc(), token, URL_, KEY, BUCKET from above) ---- */
+(()=>{
+const COLS='hero_video_url,hero_poster_url,hero_image_url,hero_eyebrow,hero_title1,hero_title2,hero_text';
+const $h=id=>document.getElementById(id);
+const patch=body=>api('/rest/v1/site_settings?id=eq.1',{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify(body)});
+async function put(blob,name,type){
+  const safe=String(name||'file').replace(/[^a-z0-9.]+/gi,'-').toLowerCase();
+  const path='hero-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)+'-'+safe;
+  const r=await fetch(`${URL_}/storage/v1/object/${BUCKET}/${path}`,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':type||blob.type||'application/octet-stream'},body:blob});
+  if(!r.ok)throw new Error('Upload failed: '+await r.text());
+  return `${URL_}/storage/v1/object/public/${BUCKET}/${path}`;
+}
+function posterFrom(file){return new Promise(res=>{
+  const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';
+  const u=URL.createObjectURL(file);let fin=false;
+  const done=b=>{if(fin)return;fin=true;URL.revokeObjectURL(u);res(b)};
+  const t=setTimeout(()=>done(null),9000);
+  v.onloadeddata=()=>{try{v.currentTime=Math.min(1.2,(v.duration||2)/2)}catch(e){done(null)}};
+  v.onseeked=()=>{try{const w=540,h=Math.round(w*v.videoHeight/v.videoWidth),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(v,0,0,w,h);c.toBlob(b=>{clearTimeout(t);done(b)},'image/jpeg',.8)}catch(e){clearTimeout(t);done(null)}};
+  v.onerror=()=>{clearTimeout(t);done(null)};
+  v.src=u;});}
+function preview(c){
+  const box=$h('heroPreview');
+  if(c.hero_image_url)box.innerHTML='Abhi lagi hui: <b>image</b><br><img src="'+esc(c.hero_image_url)+'" alt="" style="height:120px;border-radius:8px;margin-top:6px">';
+  else if(c.hero_video_url)box.innerHTML='Abhi lagi hui: <b>video</b><br><video src="'+esc(c.hero_video_url)+'" poster="'+esc(c.hero_poster_url||'')+'" muted controls playsinline style="height:160px;border-radius:8px;margin-top:6px"></video>';
+  else box.textContent='Abhi website ki default video chal rahi hai (assets/shampoo-ad.mp4).';
+}
+async function loadHero(){
+  if(!token)return;
+  try{
+    const rows=await api('/rest/v1/site_settings?id=eq.1&select='+COLS);const c=(rows&&rows[0])||{};
+    $h('heroEyebrow').value=c.hero_eyebrow||'';$h('heroTitle1').value=c.hero_title1||'';$h('heroTitle2').value=c.hero_title2||'';$h('heroText').value=c.hero_text||'';
+    preview(c);
+  }catch(e){
+    $h('heroPreview').textContent=/hero_|column|42703|PGRST/i.test(String(e.message))
+      ?'Hero ke columns nahi mile. Pehle supabase_setup.sql ko Supabase SQL Editor mein run karo.'
+      :'Hero settings load nahi hui: '+e.message;
+  }
+}
+$h('heroUpload').onclick=async()=>{
+  const f=$h('heroFile').files[0];
+  if(!f){say('Pehle video ya image select karo.');return}
+  const isVid=f.type.startsWith('video/'),isImg=f.type.startsWith('image/');
+  if(!isVid&&!isImg){say('Sirf video (MP4) ya image select karo.');return}
+  if(f.size>45*1024*1024){say('File 45 MB se badi hai. Pehle chhoti (compress) karo, 5-10 MB behtar hai.');return}
+  const b=$h('heroUpload');b.disabled=true;
+  try{
+    if(isVid){
+      say('Poster ban raha hai...');const pb=await posterFrom(f);
+      say('Video upload ho rahi hai... (thora waqt lag sakta hai)');
+      const video=await put(f,f.name,f.type);
+      const poster=pb?await put(pb,'poster.jpg','image/jpeg'):null;
+      await patch({hero_video_url:video,hero_poster_url:poster,hero_image_url:null});
+    }else{
+      say('Image upload ho rahi hai...');
+      const image=await put(f,f.name,f.type);
+      await patch({hero_image_url:image,hero_video_url:null,hero_poster_url:null});
+    }
+    $h('heroFile').value='';say('Banner save ho gaya! Website refresh karne par naya banner dikhega.');await loadHero();
+  }catch(e){say(e.message)}finally{b.disabled=false}
+};
+$h('heroReset').onclick=async()=>{
+  if(!confirm('Default video wapas lagani hai?'))return;
+  try{await patch({hero_video_url:null,hero_poster_url:null,hero_image_url:null});say('Default banner wapas laga diya.');await loadHero()}catch(e){say(e.message)}
+};
+$h('heroSaveText').onclick=async()=>{
+  const v=id=>$h(id).value.trim()||null;const b=$h('heroSaveText');b.disabled=true;say('Saving banner text...');
+  try{await patch({hero_eyebrow:v('heroEyebrow'),hero_title1:v('heroTitle1'),hero_title2:v('heroTitle2'),hero_text:v('heroText')});say('Banner text save ho gaya.')}
+  catch(e){say(e.message)}finally{b.disabled=false}
+};
+const area=document.getElementById('adminArea');
+new MutationObserver(()=>{if(!area.classList.contains('hidden'))loadHero()}).observe(area,{attributes:true,attributeFilter:['class']});
+if(token)loadHero();
+})();
+</script>
+<script>
+/* ---- sale banner manager (added) ---- */
+(()=>{
+const $s=id=>document.getElementById(id);
+async function loadSale(){
+  if(!token)return;
+  try{
+    const rows=await api('/rest/v1/site_settings?id=eq.1&select=sale_enabled,sale_items');const c=(rows&&rows[0])||{};
+    $s('saleOn').checked=!!c.sale_enabled;$s('saleItems').value=c.sale_items||'';
+  }catch(e){say('Sale banner load nahi hua. Pehle supabase_setup.sql run karo.')}
+}
+$s('saleSave').onclick=async()=>{
+  const b=$s('saleSave');b.disabled=true;say('Saving sale banner...');
+  try{
+    await api('/rest/v1/site_settings?id=eq.1',{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({sale_enabled:$s('saleOn').checked,sale_items:$s('saleItems').value.trim()||null})});
+    say($s('saleOn').checked?'Sale banner on ho gaya. Website refresh karne par dikhega.':'Sale banner off ho gaya.');
+  }catch(e){say('Save nahi hua: '+e.message+' (pehle supabase_setup.sql run karo)')}
+  finally{b.disabled=false}
+};
+const area=document.getElementById('adminArea');
+new MutationObserver(()=>{if(!area.classList.contains('hidden'))loadSale()}).observe(area,{attributes:true,attributeFilter:['class']});
+if(token)loadSale();
+})();
+</script>
+<script>
+/* ---- admin layout helpers (tabs, search, toast, logout) ---- */
+(()=>{
+const g=id=>document.getElementById(id);
+const tabs=[...document.querySelectorAll('#tabbar [data-tab]')],panes=[...document.querySelectorAll('.pane')];
+function show(name){
+  if(!panes.some(p=>p.dataset.pane===name))name='products';
+  panes.forEach(p=>{p.hidden=p.dataset.pane!==name});
+  tabs.forEach(t=>{const on=t.dataset.tab===name;t.classList.toggle('on',on);t.setAttribute('aria-current',on?'page':'false')});
+  try{sessionStorage.setItem('zadm_tab',name)}catch(e){}
+  window.__zaCrumb&&window.__zaCrumb(name);
+  window.scrollTo({top:0});
+}
+tabs.forEach(t=>t.addEventListener('click',()=>show(t.dataset.tab)));
+let saved='products';try{saved=sessionStorage.getItem('zadm_tab')||'products'}catch(e){}
+show(saved);
+/* pending-reviews badge on the Reviews tab */
+const rb=g('rvPending'),tb=g('tabRvBadge');
+const sync=()=>{const n=parseInt(rb.textContent,10)||0;tb.textContent=n;tb.hidden=!n};
+new MutationObserver(sync).observe(rb,{childList:true,characterData:true,subtree:true});sync();
+/* product search */
+const list=g('list'),box=g('prodSearch');
+function filter(){window.__zaApply&&window.__zaApply()}
+box.addEventListener('input',filter);new MutationObserver(filter).observe(list,{childList:true});
+/* toast: auto-hide, and jump to Products after a product is added */
+const msg=g('msg');let mt;
+new MutationObserver(()=>{clearTimeout(mt);if(msg.textContent){mt=setTimeout(()=>{msg.textContent=''},6000);if(/added successfully/i.test(msg.textContent))show('products')}}).observe(msg,{childList:true,characterData:true,subtree:true});
+/* logout button only when logged in */
+const area=g('adminArea'),lo=g('logout');
+const vis=()=>{lo.hidden=area.classList.contains('hidden')};
+new MutationObserver(vis).observe(area,{attributes:true,attributeFilter:['class']});vis();
+})();
+</script>
+<script>
+/* ---- layout organizer: section name in header, stat cards = filters, desktop sidebar switch ---- */
+(()=>{
+const g=id=>document.getElementById(id);
+const NAMES={products:'Products',add:'Add product',reviews:'Reviews',home:'Home page',settings:'Settings'};
+window.__zaCrumb=n=>{g('crumb').textContent=NAMES[n]||''};
+let tab='products';try{tab=sessionStorage.getItem('zadm_tab')||'products'}catch(e){}window.__zaCrumb(tab);
+/* body class: sidebar layout only after login */
+const area=g('adminArea');const sync=()=>document.body.classList.toggle('is-admin',!area.classList.contains('hidden'));
+new MutationObserver(sync).observe(area,{attributes:true,attributeFilter:['class']});sync();
+/* stats + filters */
+const list=g('list'),box=g('prodSearch'),empty=g('zaEmpty');let cur='all';
+const flags=i=>{const f=new Set();if(i.querySelector('.chip.bad'))f.add('sold');if(i.querySelector('.chip.warn'))f.add('low');if(i.querySelector('.chip.off'))f.add('hidden');if(i.querySelector('.chip.sale'))f.add('sale');return f};
+function apply(){const q=box.value.trim().toLowerCase();let shown=0,total=0;
+ list.querySelectorAll('.item').forEach(i=>{total++;const ok=(cur==='all'||flags(i).has(cur))&&(!q||(i.dataset.name||'').includes(q));i.hidden=!ok;if(ok)shown++});
+ empty.hidden=!(total&&!shown)}
+window.__zaApply=apply;
+function count(){const c={total:0,low:0,sold:0,hidden:0,sale:0};
+ list.querySelectorAll('.item').forEach(i=>{c.total++;flags(i).forEach(k=>c[k]++)});
+ g('stTotal').textContent=c.total;g('stLow').textContent=c.low;g('stSold').textContent=c.sold;g('stHidden').textContent=c.hidden;g('stSale').textContent=c.sale}
+new MutationObserver(()=>{count();apply()}).observe(list,{childList:true});count();
+g('stats').addEventListener('click',e=>{const b=e.target.closest('.stat');if(!b)return;
+ if(b.dataset.go){const t=document.querySelector('#tabbar [data-tab="'+b.dataset.go+'"]');if(t)t.click();return}
+ cur=(b.dataset.filter===cur&&cur!=='all')?'all':b.dataset.filter;
+ g('stats').querySelectorAll('.stat[data-filter]').forEach(x=>x.classList.toggle('on',x.dataset.filter===cur));apply()});
+/* pending reviews card mirrors the Reviews badge */
+const rb=g('rvPending'),sp=g('stPending'),card=sp.closest('.stat');
+const mirror=()=>{const n=parseInt(rb.textContent,10)||0;sp.textContent=n;card.classList.toggle('has',n>0)};
+new MutationObserver(mirror).observe(rb,{childList:true,characterData:true,subtree:true});mirror();
+/* on a computer open every Home-page part; on a phone only the first */
+if(matchMedia('(min-width:1000px)').matches)document.querySelectorAll('#heroBox .acc,#saleBox .acc').forEach(d=>d.open=true);
+})();
+</script>
+</body>
+</html>
